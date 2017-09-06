@@ -24,4 +24,21 @@ public class GameSetting {
     public List<Spot> spaces() {
         return space.occupied();
     }
+
+    public String toString(){
+        StringBuilder builder = new StringBuilder();
+        for (int row = 0; row < 10; row++) {
+            for (int col = 0; col < 10; col++) {
+                if (goal.isOccupied(row, col)){
+                    builder.append("X");
+                } else if (space.isOccupied(row, col)){
+                    builder.append("-");
+                } else {
+                    builder.append("#");
+                }
+            }
+            builder.append("\n");
+        }
+        return builder.toString();
+    }
 }

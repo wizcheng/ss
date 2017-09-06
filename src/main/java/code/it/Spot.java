@@ -29,4 +29,27 @@ public class Spot {
                 new Spot(row, col+1)
         );
     }
+
+    public Spot otherSideOf(Spot spot) {
+        if (row == spot.row){
+            if (col + 1 == spot.col){
+                return new Spot(row, col - 1);
+            } else if (col - 1 == spot.col ){
+                return new Spot(row, col + 1);
+            } else {
+                throw new IllegalStateException("Invalid state");
+            }
+
+        } else if (col == spot.col) {
+            if (row +1 == spot.row){
+                return new Spot(row - 1, col);
+            } else if ( row-1 == spot.row){
+                return new Spot(row + 1, col);
+            } else {
+                throw new IllegalStateException("Invalid state");
+            }
+        } else {
+            throw new IllegalStateException("Invalid state");
+        }
+    }
 }

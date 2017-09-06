@@ -22,15 +22,25 @@ public class BFS implements Strategy {
     @Override
     public List<GameState> solve(GameSetting setting, GameHistory history, GameState initialState) {
 
+        System.out.println("Game settings ----");
+        System.out.println(setting);
+
         boolean gameCompleted = false;
         boolean gameFailed = false;
         int step = 0;
+
+        System.out.println("Initial ----");
+        System.out.println(initialState);
 
         List<GameState> steps = new ArrayList<>();
         List<GameState> currentStates = new ArrayList<>();
         GameState state = GameUtils.updateMovable(setting, initialState.copy());
         currentStates.add(state);
         history.add(state);
+
+        System.out.println("Start ----");
+        System.out.println(state);
+
         while(!gameCompleted && !gameFailed && step++<maxSteps){
 
             System.out.println("Iterator " + step +", " + currentStates.size() + " possible move(s).");
@@ -40,6 +50,8 @@ public class BFS implements Strategy {
                     .filter(s -> !history.exist(s))
                     .filter(s -> !GameUtils.isDead(setting, s))
                     .collect(Collectors.toList());
+
+            nextStates.forEach(System.out::println);
 
             if (nextStates.size()==0){
                 gameFailed = true;

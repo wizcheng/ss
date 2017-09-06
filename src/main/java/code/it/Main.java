@@ -20,7 +20,7 @@ public class Main {
         lines.add("######");
 
         GameHistory history = GameUtils.createHistory();
-        GameUtils.Game game = GameUtils.createSetting(lines);
+        GameUtils.Game game = GameUtils.init(lines);
 
         BFS strategy = new BFS(1000);
         List<GameState> steps = strategy.solve(game.setting, history, game.initialState);

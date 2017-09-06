@@ -67,4 +67,21 @@ public class GameState {
     public boolean isMovable(Spot p) {
         return movable.isOccupied(p);
     }
+
+    public String toString(){
+        StringBuilder builder = new StringBuilder();
+        for (int row = 0; row < 10; row++) {
+            for (int col = 0; col < 10; col++) {
+                if (box.isOccupied(row, col)){
+                    builder.append("M");
+                } else if (movable.isOccupied(row, col)){
+                    builder.append("v");
+                } else {
+                    builder.append("#");
+                }
+            }
+            builder.append("\n");
+        }
+        return builder.toString();
+    }
 }

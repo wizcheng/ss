@@ -2,6 +2,7 @@ package code.it;
 
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -10,7 +11,9 @@ import java.util.stream.Stream;
 public class GameUtils {
 
     private static boolean isPossible(GameSetting setting, GameState state, Spot box, Spot spot){
-        throw new NotImplementedException();
+        return state.isMovable(box.otherSideOf(spot))
+                && setting.isSpace(spot)
+                && !state.isBox(spot);
     }
 
     public static boolean isDead(GameSetting setting, GameState state){
@@ -61,7 +64,7 @@ public class GameUtils {
         return new GameHistory();
     }
 
-    public static Game createSetting(List<String> board){
+    public static Game init(List<String> board){
 
         Board box = new Board(10, 10);
         Board movable = new Board(10, 10);
@@ -104,6 +107,11 @@ public class GameUtils {
                         box.add(spot);
                         goal.add(spot);
                         break;
+                    case ' ':
+                        space.add(spot);
+                        break;
+                    default:
+                        throw new IllegalStateException("Unknown! " + digit);
                 }
             }
         }
@@ -115,18 +123,31 @@ public class GameUtils {
 
     public static GameState updateMovable(GameSetting setting, GameState state) {
 
-        final GameState nextState = state.copy();
+        final GameState nextState = state;
+        GameState prevState;
+        int iteration = 0;
         do {
+
+            prevState = nextState.copy();
+            final GameState toTest = prevState;
+
             setting.spaces()
                     .forEach(s -> nextState.setMovable(s, false));
 
             setting.spaces()
                     .stream()
                     .filter(s -> !state.haveBox(s))
-                    .filter(s -> s.possibleMoves().stream().anyMatch(p -> state.isMovable(p)))
+                    .filter(s -> toTest.isMovable(s) || s.possibleMoves().stream().anyMatch(p -> toTest.isMovable(p)))
                     .forEach(s -> nextState.setMovable(s, true));
 
-        } while (!state.equals(nextState));
+            if (iteration++ > 1000000){
+                throw new IllegalStateException("Invalid implementation");
+            }
+
+//            System.out.println("next state ----");
+//            System.out.println(nextState);
+
+        } while (!prevState.equals(nextState));
 
         return nextState;
     }

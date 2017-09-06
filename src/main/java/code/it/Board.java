@@ -17,6 +17,10 @@ public class Board {
         }
     }
 
+    public Board(BitSet[] boxes) {
+        this.boxes = boxes;
+    }
+
     public boolean isOccupied(int row, int col){
         return boxes[row].get(col);
     }
@@ -54,7 +58,12 @@ public class Board {
     }
 
     public Board copy() {
-        return new Board(boxes.length, boxes[0].length());
+        BitSet[] rowCopy = new BitSet[boxes.length];
+        for (int i = 0; i < rowCopy.length; i++) {
+            rowCopy[i] = new BitSet(boxes[i].length());
+            rowCopy[i].or(boxes[i]);
+        }
+        return new Board(rowCopy);
     }
 
     public Board remove(Spot spot) {
@@ -70,5 +79,20 @@ public class Board {
     public Board set(Spot spot, boolean value) {
         boxes[spot.getRow()].set(spot.getCol(), value);
         return this;
+    }
+
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < boxes.length; i++) {
+            for (int j = 0; j < boxes[i].length(); j++) {
+                if (isOccupied(i, j)){
+                    builder.append("M");
+                } else {
+                    builder.append(" ");
+                }
+            }
+            builder.append("\n");
+        }
+        return builder.toString();
     }
 }
