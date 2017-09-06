@@ -1,17 +1,21 @@
 package code.it;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
 import java.util.List;
 
 public class GameState {
 
     private final Board box;
     private final Board movable;
+    private GameState previousState;
 
     public GameState(Board box, Board movable) {
         this.box = box;
         this.movable = movable;
+    }
+
+    public GameState setPreviousState(GameState previousState){
+        this.previousState = previousState;
+        return this;
     }
 
     public List<Spot> boxes() {
@@ -46,7 +50,9 @@ public class GameState {
     }
 
     public GameState copy() {
-        return new GameState(box.copy(), movable.copy());
+        GameState gameState = new GameState(box.copy(), movable.copy());
+        gameState.previousState = previousState;
+        return gameState;
     }
 
     public boolean isBox(Spot s) {
@@ -83,5 +89,9 @@ public class GameState {
             builder.append("\n");
         }
         return builder.toString();
+    }
+
+    public GameState getPreviousState() {
+        return previousState;
     }
 }

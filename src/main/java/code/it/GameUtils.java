@@ -53,6 +53,7 @@ public class GameUtils {
                 .map(box -> {
                     return possibleSpots(setting, state, box)
                             .map(newSpot -> state.copy().move(box, newSpot))
+                            .map(s -> s.setPreviousState(state))
                             .collect(Collectors.toList());
                 })
                 .flatMap(l -> l.stream())
@@ -143,9 +144,6 @@ public class GameUtils {
             if (iteration++ > 1000000){
                 throw new IllegalStateException("Invalid implementation");
             }
-
-//            System.out.println("next state ----");
-//            System.out.println(nextState);
 
         } while (!prevState.equals(nextState));
 

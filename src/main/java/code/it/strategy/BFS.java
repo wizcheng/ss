@@ -32,7 +32,7 @@ public class BFS implements Strategy {
         System.out.println("Initial ----");
         System.out.println(initialState);
 
-        List<GameState> steps = new ArrayList<>();
+        GameState endState = null;
         List<GameState> currentStates = new ArrayList<>();
         GameState state = GameUtils.updateMovable(setting, initialState.copy());
         currentStates.add(state);
@@ -60,19 +60,31 @@ public class BFS implements Strategy {
                         .filter(s -> GameUtils.isEnd(setting, s))
                         .collect(Collectors.toList());
 
-
                 if (solutions.size() > 0){
                     gameCompleted = true;
+                    endState = solutions.get(0);
                 } else {
                     currentStates = nextStates;
                 }
             }
         }
 
+        List<GameState> steps = retrieveSteps(endState);
+
         if (gameCompleted) System.out.println("Game completed");
         else if (gameFailed) System.out.println("Game failed, no possible moves");
         else System.out.println("Game failed, exist max move(s) ("+maxSteps+")");
 
+        return steps;
+    }
+
+    private List<GameState> retrieveSteps(GameState state) {
+        List<GameState> steps = new ArrayList<>();
+        while(state!=null){
+            steps.add(state);
+            state = state.getPreviousState();
+        }
+        Collections.reverse(steps);
         return steps;
     }
 
