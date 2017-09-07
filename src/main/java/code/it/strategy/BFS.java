@@ -23,14 +23,11 @@ public class BFS implements Strategy {
     public List<GameState> solve(GameSetting setting, GameHistory history, GameState initialState) {
 
         System.out.println("Game settings ----");
-        System.out.println(setting);
+        System.out.println(GameUtils.toString(GameUtils.toView(setting, initialState)));
 
         boolean gameCompleted = false;
         boolean gameFailed = false;
         int step = 0;
-
-        System.out.println("Initial ----");
-        System.out.println(initialState);
 
         GameState endState = null;
         List<GameState> currentStates = new ArrayList<>();
@@ -39,7 +36,7 @@ public class BFS implements Strategy {
         history.add(state);
 
         System.out.println("Start ----");
-        System.out.println(state);
+        System.out.println(GameUtils.toString(GameUtils.toView(setting, initialState)));
 
         while(!gameCompleted && !gameFailed && step++<maxSteps){
 
@@ -50,8 +47,6 @@ public class BFS implements Strategy {
                     .filter(s -> !history.exist(s))
                     .filter(s -> !GameUtils.isDead(setting, s))
                     .collect(Collectors.toList());
-
-            nextStates.forEach(System.out::println);
 
             if (nextStates.size()==0){
                 gameFailed = true;

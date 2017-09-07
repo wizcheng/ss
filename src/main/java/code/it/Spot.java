@@ -52,4 +52,13 @@ public class Spot {
             throw new IllegalStateException("Invalid state");
         }
     }
+
+    public boolean isDiagonal(Spot spot) {
+        return Math.abs(row - spot.row) == 1
+                && Math.abs(col - spot.col) == 1;
+    }
+
+    public String toString(){
+        return "(" + row + ", " + col + ")";
+    }
 }

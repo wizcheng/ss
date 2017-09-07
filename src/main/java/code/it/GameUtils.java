@@ -1,8 +1,5 @@
 package code.it;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,9 +19,11 @@ public class GameUtils {
 
             if (!setting.isGoal(box)){
 
-                long possibleMoves = possibleSpots(setting, state, box).count();
-
-                if (possibleMoves == 0) {
+                List<Spot> nonSpace = box.possibleMoves().stream()
+                        .filter(s -> !setting.isSpace(s))
+                        .collect(Collectors.toList());
+                if (nonSpace.size()==2 && nonSpace.get(0).isDiagonal(nonSpace.get(1))) {
+                    System.out.println("box at " + box + " is dead");
                     return true;
                 }
             }
@@ -67,10 +66,15 @@ public class GameUtils {
 
     public static Game init(List<String> board){
 
-        Board box = new Board(10, 10);
-        Board movable = new Board(10, 10);
-        Board space = new Board(10, 10);
-        Board goal = new Board(10, 10);
+
+        int rows = board.size();
+        int cols = board.get(0).length();
+
+        Board box = new Board(rows, cols);
+        Board movable = new Board(rows, cols);
+        Board space = new Board(rows, cols);
+        Board goal = new Board(rows, cols);
+        Board wall = new Board(rows, cols);
 
 //        #   (hash)      Wall
 //        .	(period)	Empty goal
@@ -84,32 +88,25 @@ public class GameUtils {
                 char digit = board.get(row).charAt(col);
                 Spot spot = new Spot(row, col);
                 switch (digit){
-                    case '#':
-                        break;
-                    case '.':
-                        space.add(spot);
-                        goal.add(spot);
-                        break;
-                    case '@':
-                        space.add(spot);
-                        movable.add(spot);
-                        break;
-                    case '+':
-                        space.add(spot);
-                        movable.add(spot);
-                        goal.add(spot);
-                        break;
-                    case '$':
-                        space.add(spot);
-                        box.add(spot);
-                        break;
                     case '*':
                         space.add(spot);
-                        box.add(spot);
                         goal.add(spot);
+                        break;
+                    case 'o':
+                        space.add(spot);
+                        box.add(spot);
+                        break;
+                    case 'b':
+                        space.add(spot);
+                        movable.add(spot);
                         break;
                     case ' ':
                         space.add(spot);
+                        break;
+                    case '-':
+                        wall.add(spot);
+                        break;
+                    case 'x':
                         break;
                     default:
                         throw new IllegalStateException("Unknown! " + digit);
@@ -117,7 +114,7 @@ public class GameUtils {
             }
         }
         return new Game(
-                new GameSetting(goal, space),
+                new GameSetting(rows, cols, goal, space, wall),
                 new GameState(box, movable)
         );
     }
@@ -150,6 +147,69 @@ public class GameUtils {
         return nextState;
     }
 
+    public static String toString(List<List<String>> view){
+        return view.stream()
+                .map(row -> row.stream().collect(Collectors.joining()))
+                .collect(Collectors.joining("\n"));
+    }
+
+
+
+    private static String toHtml(Spot spot, String color, int border){
+        String borderStyle = border > 0 ? "border: solid 1px brown" : "";
+        return "<div style='background-color: "+color+"; top: "+spot.getRow()*10+"; left: "+spot.getCol()*10+"; width:10px; height:10px; position: absolute; opacity: 0.7; box-sizing: border-box; "+borderStyle+"'></div>";
+    }
+
+    public static String toHtml(GameSetting settings, GameState state){
+
+
+        String wall = settings.walls().stream()
+                .map(s -> toHtml(s, "black", 0))
+                .collect(Collectors.joining());
+
+        String space = settings.spaces().stream()
+                .map(s -> toHtml(s, "white", 0))
+                .collect(Collectors.joining());
+
+        String goal = settings.goals().stream()
+                .map(s -> toHtml(s, "yellow", 0))
+                .collect(Collectors.joining());
+
+        String boxes = state.boxes().stream()
+                .map(s -> toHtml(s, "orange", 1))
+                .collect(Collectors.joining());
+
+        return "<div style='position:relative; width: "+settings.cols()*10+"px; height: "+settings.rows()*10+"px'>" +
+                space + wall + goal + boxes +
+                "</div>";
+
+
+    }
+
+    public static List<List<String>> toView(GameSetting setting, GameState state) {
+        List<List<String>> results = new ArrayList<>();
+        for (int row = 0; row < setting.rows(); row++) {
+            ArrayList<String> currRow = new ArrayList<>();
+            results.add(currRow);
+            for (int col = 0; col < setting.cols(); col++) {
+
+                Spot spot = new Spot(row, col);
+                String digit = "x";
+                if (setting.isWall(spot)){
+                    digit = "-";
+                } else if (state.isBox(spot)){
+                    digit = "o";
+                } else if (setting.isGoal(spot)) {
+                    digit = "*";
+                } else if (setting.isSpace(spot)) {
+                    digit = " ";
+                }
+
+                currRow.add(digit);
+            }
+        }
+        return results;
+    }
 
     public static class Game {
 

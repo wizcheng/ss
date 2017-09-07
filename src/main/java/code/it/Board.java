@@ -81,18 +81,5 @@ public class Board {
         return this;
     }
 
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < boxes.length; i++) {
-            for (int j = 0; j < boxes[i].length(); j++) {
-                if (isOccupied(i, j)){
-                    builder.append("M");
-                } else {
-                    builder.append(" ");
-                }
-            }
-            builder.append("\n");
-        }
-        return builder.toString();
-    }
+
 }

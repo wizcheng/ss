@@ -4,14 +4,27 @@ import java.util.List;
 
 public class GameSetting {
 
+    private final int rows;
+    private final int cols;
     private final Board goal;
     private final Board space;
+    private final Board wall;
 
-    public GameSetting(Board goal, Board space) {
+    public GameSetting(int rows, int cols, Board goal, Board space, Board wall) {
+        this.rows = rows;
+        this.cols = cols;
         this.goal = goal;
         this.space = space;
+        this.wall = wall;
     }
 
+    public int rows(){
+        return rows;
+    }
+
+    public int cols(){
+        return cols;
+    }
 
     public boolean isGoal(Spot box) {
         return goal.isOccupied(box);
@@ -21,24 +34,20 @@ public class GameSetting {
         return space.isOccupied(s);
     }
 
+    public boolean isWall(Spot s){
+        return wall.isOccupied(s);
+    }
+
     public List<Spot> spaces() {
         return space.occupied();
     }
 
-    public String toString(){
-        StringBuilder builder = new StringBuilder();
-        for (int row = 0; row < 10; row++) {
-            for (int col = 0; col < 10; col++) {
-                if (goal.isOccupied(row, col)){
-                    builder.append("X");
-                } else if (space.isOccupied(row, col)){
-                    builder.append("-");
-                } else {
-                    builder.append("#");
-                }
-            }
-            builder.append("\n");
-        }
-        return builder.toString();
+
+    public List<Spot> walls() {
+        return wall.occupied();
+    }
+
+    public List<Spot> goals() {
+        return goal.occupied();
     }
 }
