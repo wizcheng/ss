@@ -27,27 +27,27 @@ public class GameSetting {
     }
 
     public boolean isGoal(Spot box) {
-        return goal.isOccupied(box);
+        return goal.isOccupied(cols(), box);
     }
 
     public boolean isSpace(Spot s) {
-        return space.isOccupied(s);
+        return space.isOccupied(cols(), s);
     }
 
     public boolean isWall(Spot s){
-        return wall.isOccupied(s);
+        return wall.isOccupied(cols(), s);
     }
 
     public List<Spot> spaces() {
-        return space.occupied();
+        return space.occupied(this);
     }
 
 
     public List<Spot> walls() {
-        return wall.occupied();
+        return wall.occupied(this);
     }
 
     public List<Spot> goals() {
-        return goal.occupied();
+        return goal.occupied(this);
     }
 }

@@ -1,63 +1,117 @@
 package code.it;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class GameUtils {
 
-    private static boolean isPossible(GameSetting setting, GameState state, Spot box, Spot spot){
-        return state.isMovable(box.otherSideOf(spot))
-                && setting.isSpace(spot)
-                && !state.isBox(spot);
+    private static long checkDead = 0;
+    private static long checkPossible = 0;
+    private static long checkEnd = 0;
+    private static long calculateNextMoveSingle = 0;
+    private static long updateMovable = 0;
+    private static long startTimeMs = System.currentTimeMillis();
+
+    private static ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+
+    static  {
+        service.scheduleAtFixedRate(() -> {
+            printTimes();
+        }, 30, 60, TimeUnit.SECONDS);
+    }
+
+    public static void printTimes(){
+        System.out.println("--------------------");
+        System.out.println(String.format("checkDead = %.2f ms", checkDead/1_000_000.0));
+        System.out.println(String.format("checkPossible = %.2f ms", checkPossible/1_000_000.0));
+        System.out.println(String.format("checkEnd = %.2f ms", checkEnd/1_000_000.0));
+        System.out.println(String.format("calculateNextMoveSingle = %.2f ms", calculateNextMoveSingle/1_000_000.0));
+        System.out.println(String.format("updateMovable = %.2f ms", updateMovable/1_000_000.0));
+        System.out.println("====================");
+        System.out.println(String.format("Total Time Taken = %.2f ms", System.currentTimeMillis() - startTimeMs));
+        System.out.println("--------------------");
+    }
+
+    private static boolean isPossible(GameSetting gameSetting, GameState state, Spot box, Spot spot){
+        long start = System.nanoTime();
+        try {
+            return state.isMovable(gameSetting, box.otherSideOf(spot))
+                    && gameSetting.isSpace(spot)
+                    && !state.isBox(gameSetting, spot);
+        } finally {
+            checkPossible += System.nanoTime() - start;
+        }
     }
 
     public static boolean isDead(GameSetting setting, GameState state){
-        List<Spot> boxes = state.boxes();
-        for (Spot box : boxes) {
+        long start = System.nanoTime();
+        try {
+            List<Spot> boxes = state.boxes(setting);
+            for (Spot box : boxes) {
 
-            if (!setting.isGoal(box)){
+                if (!setting.isGoal(box)) {
 
-                List<Spot> nonSpace = box.possibleMoves().stream()
-                        .filter(s -> !setting.isSpace(s))
-                        .collect(Collectors.toList());
-                if (nonSpace.size()==2 && nonSpace.get(0).isDiagonal(nonSpace.get(1))) {
-                    System.out.println("box at " + box + " is dead");
-                    return true;
+                    List<Spot> nonSpace = box.possibleMoves().stream()
+                            .filter(s -> !setting.isSpace(s))
+                            .collect(Collectors.toList());
+                    if (nonSpace.size() == 2 && nonSpace.get(0).isDiagonal(nonSpace.get(1))) {
+//                    System.out.println("box at " + box + " is dead");
+                        return true;
+                    }
                 }
             }
+            return false;
+        } finally {
+            checkDead += System.nanoTime() - start;
         }
-        return false;
     }
 
-    private static Stream<Spot> possibleSpots(GameSetting setting, GameState state, Spot box) {
-        return box.possibleMoves()
-                .stream()
-                .filter(s -> !state.isBox(s))
-                .filter(s -> setting.isSpace(s))
-                .filter(s -> isPossible(setting, state, box, s));
+    private static List<Spot> possibleSpots(GameSetting gameSetting, GameState state, Spot box) {
+
+        List<Spot> nextSpots = new ArrayList<>(4);
+        for (Spot spot : box.possibleMoves()) {
+            if (!state.isBox(gameSetting, spot)
+                    && gameSetting.isSpace(spot)
+                    && isPossible(gameSetting, state, box, spot)){
+                nextSpots.add(spot);
+            }
+        }
+        return nextSpots;
     }
 
     public static boolean isEnd(GameSetting setting, GameState state){
-        return !state.boxes()
-                .stream()
-                .anyMatch(box -> !setting.isGoal(box));
+        long start = System.nanoTime();
+        try {
+            return !state.boxes(setting)
+                    .stream()
+                    .anyMatch(box -> !setting.isGoal(box));
+        } finally {
+            checkEnd += System.nanoTime() - start;
+        }
     }
 
-    public static List<GameState> nextMove(GameSetting setting, GameHistory history, GameState state){
-
-        return state.boxes()
-                .stream()
-                .map(box -> {
-                    return possibleSpots(setting, state, box)
-                            .map(newSpot -> state.copy().move(box, newSpot))
-                            .map(s -> s.setPreviousState(state))
-                            .collect(Collectors.toList());
-                })
-                .flatMap(l -> l.stream())
-                .distinct()
-                .collect(Collectors.toList());
+    public static Set<GameState> nextMove(GameSetting gameSetting, GameHistory history, GameState state){
+        long start = System.nanoTime();
+        try {
+            Set<GameState> nextMoves = new HashSet<>(10000);
+            for (Spot box : state.boxes(gameSetting)) {
+                List<Spot> nextSpots = possibleSpots(gameSetting, state, box);
+                for (Spot nextSpot : nextSpots) {
+                    GameState nextState = state.copy().move(gameSetting, box, nextSpot);
+                    nextState.setPreviousState(state);
+                    nextMoves.add(nextState);
+                }
+            }
+            return nextMoves;
+        } finally {
+            calculateNextMoveSingle += System.nanoTime() - start;
+        }
     }
 
     public static GameHistory createHistory(){
@@ -75,6 +129,7 @@ public class GameUtils {
         Board space = new Board(rows, cols);
         Board goal = new Board(rows, cols);
         Board wall = new Board(rows, cols);
+        Spot player = null;
 
 //        #   (hash)      Wall
 //        .	(period)	Empty goal
@@ -89,22 +144,23 @@ public class GameUtils {
                 Spot spot = new Spot(row, col);
                 switch (digit){
                     case '*':
-                        space.add(spot);
-                        goal.add(spot);
+                        space.add(cols, spot);
+                        goal.add(cols, spot);
                         break;
                     case 'o':
-                        space.add(spot);
-                        box.add(spot);
+                        space.add(cols, spot);
+                        box.add(cols, spot);
                         break;
                     case 'b':
-                        space.add(spot);
-                        movable.add(spot);
+                        space.add(cols, spot);
+                        movable.add(cols, spot);
+                        player = spot;
                         break;
                     case ' ':
-                        space.add(spot);
+                        space.add(cols, spot);
                         break;
                     case '-':
-                        wall.add(spot);
+                        wall.add(cols, spot);
                         break;
                     case 'x':
                         break;
@@ -113,38 +169,47 @@ public class GameUtils {
                 }
             }
         }
+        GameState initialState = new GameState(box, movable);
+        initialState.setPlayer(player);
         return new Game(
                 new GameSetting(rows, cols, goal, space, wall),
-                new GameState(box, movable)
+                initialState
         );
     }
 
-    public static GameState updateMovable(GameSetting setting, GameState state) {
 
-        final GameState nextState = state;
-        GameState prevState;
-        int iteration = 0;
-        do {
+    private static void updateMovable(GameSetting gameSetting, GameState state, Spot current) {
 
-            prevState = nextState.copy();
-            final GameState toTest = prevState;
+        List<Spot> spots = current.possibleMoves();
+        for (Spot spot : spots) {
+            if (state.isMovable(gameSetting, spot)){
+                // already visit
+                // about
+            } else {
 
-            setting.spaces()
-                    .forEach(s -> nextState.setMovable(s, false));
-
-            setting.spaces()
-                    .stream()
-                    .filter(s -> !state.haveBox(s))
-                    .filter(s -> toTest.isMovable(s) || s.possibleMoves().stream().anyMatch(p -> toTest.isMovable(p)))
-                    .forEach(s -> nextState.setMovable(s, true));
-
-            if (iteration++ > 1000000){
-                throw new IllegalStateException("Invalid implementation");
+                if (gameSetting.isSpace(spot) && !state.isBox(gameSetting, spot)){
+                    state.setMovable(gameSetting, spot, true);
+                    updateMovable(gameSetting, state, spot);
+                } else {
+                    // not movable
+                    // end
+                }
             }
+        }
 
-        } while (!prevState.equals(nextState));
+    }
 
-        return nextState;
+    public static void updateMovable(GameSetting gameSetting, GameState state) {
+
+        long start = System.nanoTime();
+        try {
+            state.clearMovable();
+            Spot player = state.getPlayer();
+            state.setMovable(gameSetting, player, true);
+            updateMovable(gameSetting, state, player);
+        } finally {
+            updateMovable += System.nanoTime() - start;
+        }
     }
 
     public static String toString(List<List<String>> view){
@@ -175,33 +240,35 @@ public class GameUtils {
                 .map(s -> toHtml(s, "yellow", 0))
                 .collect(Collectors.joining());
 
-        String boxes = state.boxes().stream()
+        String boxes = state.boxes(settings).stream()
                 .map(s -> toHtml(s, "orange", 1))
                 .collect(Collectors.joining());
 
+        String player = toHtml(state.getPlayer(), "blue", 0);
+
         return "<div style='position:relative; width: "+settings.cols()*10+"px; height: "+settings.rows()*10+"px'>" +
-                space + wall + goal + boxes +
+                space + wall + goal + boxes + player +
                 "</div>";
 
 
     }
 
-    public static List<List<String>> toView(GameSetting setting, GameState state) {
+    public static List<List<String>> toView(GameSetting gameSetting, GameState state) {
         List<List<String>> results = new ArrayList<>();
-        for (int row = 0; row < setting.rows(); row++) {
+        for (int row = 0; row < gameSetting.rows(); row++) {
             ArrayList<String> currRow = new ArrayList<>();
             results.add(currRow);
-            for (int col = 0; col < setting.cols(); col++) {
+            for (int col = 0; col < gameSetting.cols(); col++) {
 
                 Spot spot = new Spot(row, col);
                 String digit = "x";
-                if (setting.isWall(spot)){
+                if (gameSetting.isWall(spot)){
                     digit = "-";
-                } else if (state.isBox(spot)){
+                } else if (state.isBox(gameSetting, spot)){
                     digit = "o";
-                } else if (setting.isGoal(spot)) {
+                } else if (gameSetting.isGoal(spot)) {
                     digit = "*";
-                } else if (setting.isSpace(spot)) {
+                } else if (gameSetting.isSpace(spot)) {
                     digit = " ";
                 }
 

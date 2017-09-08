@@ -16,42 +16,118 @@ public class Main {
 
         List<String> lines = new ArrayList<>();
 
-        lines.add("xx---xxx");
-        lines.add("xx-*-xxx");
-        lines.add("xx- ----");
-        lines.add("---o o*-");
-        lines.add("-*ob  --");
-        lines.add("----o --");
-        lines.add("xxx-*-xx");
-        lines.add("xxx---xx");
+        // level 1
+//        lines.add("xx---xxx");
+//        lines.add("xx-*-xxx");
+//        lines.add("xx- ----");
+//        lines.add("---o o*-");
+//        lines.add("-*ob  --");
+//        lines.add("----o --");
+//        lines.add("xxx-*-xx");
+//        lines.add("xxx---xx");
 
+        // level 8
+//        lines.add("xxx------x");
+//        lines.add("x---    -x");
+//        lines.add("--* o-- --");
+//        lines.add("-**o o  b-");
+//        lines.add("-** o o --");
+//        lines.add("------  -x");
+//        lines.add("xxxxx----x");
+
+        // level 13
+//        lines.add("xx--------");
+//        lines.add("xx-   -* -");
+//        lines.add("x--  o***-");
+//        lines.add("x-  o -**-");
+//        lines.add("-- --o-o--");
+//        lines.add("-   o    -");
+//        lines.add("-   -  o -");
+//        lines.add("-------b -");
+//        lines.add("xxxxxx----");
+
+        // level 15
+//        lines.add("xxx------xx");
+//        lines.add("xxx- ***-xx");
+//        lines.add("----****-xx");
+//        lines.add("-  ---o ---");
+//        lines.add("- o o  oo -");
+//        lines.add("-b o o    -");
+//        lines.add("-   ---   -");
+//        lines.add("-----x-----");
+
+
+        // level 16
+//        lines.add("--------x");
+//        lines.add("-      -x");
+//        lines.add("- -oo  -x");
+//        lines.add("- ***- -x");
+//        lines.add("--***o --");
+//        lines.add("x- -- o -");x
+//        lines.add("x-o  o  -");
+//        lines.add("x-  -  b-");
+//        lines.add("x--------");
+
+
+
+        // level 20
+//        lines.add("xxxxxx---------");
+//        lines.add("xxxxxx-       -");
+//        lines.add("xxxxxx- - - - -");
+//        lines.add("xxxxxx-  o o- -");
+//        lines.add("-------   o   -");
+//        lines.add("-**-  -- o o- -");
+//        lines.add("-**   -- o o  -");
+//        lines.add("-**-  -- ------");
+//        lines.add("-**- - o o -xxx");
+//        lines.add("-**     o  -xxx");
+//        lines.add("-  --- b ---xxx");
+//        lines.add("----x-----xxxxx");
+
+        // level 21
+        lines.add("xxxxx-----xx");
+        lines.add("----x-   --x");
+        lines.add("-  ---o-  -x");
+        lines.add("- o ****- --");
+        lines.add("-  --****  -");
+        lines.add("-    o--o- -");
+        lines.add("- o-o   o  -");
+        lines.add("-- b ---o- -");
+        lines.add("x-----x-   -");
+        lines.add("xxxxxxx-----");
+
+        // level 25
+//        lines.add("------------xx");
+//        lines.add("-**  -     ---");
+//        lines.add("-**  - o  o  -");
+//        lines.add("-**  -o----  -");
+//        lines.add("-**    b --  -");
+//        lines.add("-**  - -  o --");
+//        lines.add("------ --o o -");
+//        lines.add("xx- o  o o o -");
+//        lines.add("xx-    -     -");
+//        lines.add("xx------------");
+
+
+
+
+
+        // level 30
 //        lines.add("xxx----------x");
 //        lines.add("----******  -x");
-//        lines.add("-  *****-  -xx");
+//        lines.add("-   *****-  -x");
 //        lines.add("-  -****** --x");
 //        lines.add("-- ----o--o-xx");
-//        lines.add("-bo  o o  ---x");
-//        lines.add("- oo    --  -x");
+//        lines.add("-bo  o o   ---");
+//        lines.add("- oo    --   -");
 //        lines.add("- -  oo--  - -");
-//        lines.add("-  o  - oo  -x");
-//        lines.add("-  o  o  -o -x");
-//        lines.add("----  - o o -x");
-//        lines.add("xxx-  -    -xx");
+//        lines.add("-   o  - oo  -");
+//        lines.add("-  o  o   -o -");
+//        lines.add("----   - o o -");
+//        lines.add("xxx-   -     -");
 //        lines.add("xxx-----------");
 
-//        "--------xxxxxxxx",
-//        "-  -  -xxxxxxxx",
-//        "- o    ----xxxxx",
-//        "-- --o -b ------",
-//        "x-  o o--o  -  -",
-//        "x- -  o - o ***-",
-//        "x- o -o    -***-",
-//        "x-    -- o-***-",
-//        "x--- o -  o ***-",
-//        "xxx--- -  o-***-",
-//        "xxxx-  oo  -----",
-//        "xxxx-    --xxxx",
-//        "xxxx-------xxxxx"
+
 
 
         GameHistory history = GameUtils.createHistory();
@@ -74,6 +150,7 @@ public class Main {
         FileUtils.writeStringToFile(new File("./solution.html"), output.toString(), "UTF-8");
 
         System.out.println(output.toString());
+        System.exit(0);
 
 
 

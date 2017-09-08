@@ -4,15 +4,16 @@ import code.it.GameHistory;
 import code.it.GameSetting;
 import code.it.GameState;
 import code.it.GameUtils;
+import org.apache.commons.io.FileUtils;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class BFS implements Strategy {
 
+    private boolean debug = true;
     private int maxSteps;
 
     public BFS(int maxSteps) {
@@ -22,6 +23,7 @@ public class BFS implements Strategy {
     @Override
     public List<GameState> solve(GameSetting setting, GameHistory history, GameState initialState) {
 
+        StringBuilder debugLog = new StringBuilder();
         System.out.println("Game settings ----");
         System.out.println(GameUtils.toString(GameUtils.toView(setting, initialState)));
 
@@ -30,38 +32,39 @@ public class BFS implements Strategy {
         int step = 0;
 
         GameState endState = null;
-        List<GameState> currentStates = new ArrayList<>();
-        GameState state = GameUtils.updateMovable(setting, initialState.copy());
+        Collection<GameState> currentStates = new LinkedList<>();
+        GameState state = initialState.copy();
+        GameUtils.updateMovable(setting, state);
         currentStates.add(state);
         history.add(state);
 
         System.out.println("Start ----");
         System.out.println(GameUtils.toString(GameUtils.toView(setting, initialState)));
+        if (debug){
+            debugLog.append(GameUtils.toHtml(setting, initialState));
+        }
 
         while(!gameCompleted && !gameFailed && step++<maxSteps){
 
-            System.out.println("Iterator " + step +", " + currentStates.size() + " possible move(s).");
+            System.out.println(String.format("Iteration %d, states=%d, history=%d", step, currentStates.size(), history.size()));
 
-            List<GameState> nextStates = search(setting, history, currentStates)
-                    .stream()
-                    .filter(s -> !history.exist(s))
-                    .filter(s -> !GameUtils.isDead(setting, s))
-                    .collect(Collectors.toList());
+            Collection<GameState> nextStates = search(setting, history, currentStates);
 
             if (nextStates.size()==0){
                 gameFailed = true;
             } else {
-                List<GameState> solutions = nextStates.stream()
-                        .filter(s -> GameUtils.isEnd(setting, s))
-                        .collect(Collectors.toList());
-
-                if (solutions.size() > 0){
-                    gameCompleted = true;
-                    endState = solutions.get(0);
-                } else {
-                    currentStates = nextStates;
+                for (GameState nextState : nextStates) {
+                    if (GameUtils.isEnd(setting, nextState)) {
+                        gameCompleted = true;
+                        endState = nextState;
+                    }
                 }
+
             }
+
+            currentStates = nextStates;
+
+
         }
 
         List<GameState> steps = retrieveSteps(endState);
@@ -69,6 +72,14 @@ public class BFS implements Strategy {
         if (gameCompleted) System.out.println("Game completed");
         else if (gameFailed) System.out.println("Game failed, no possible moves");
         else System.out.println("Game failed, exist max move(s) ("+maxSteps+")");
+
+        if (debug){
+            try {
+                FileUtils.writeStringToFile(new File("./debug.html"), "<html><body>"+debugLog.toString()+"</body></html>", "UTF-8");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         return steps;
     }
@@ -83,14 +94,24 @@ public class BFS implements Strategy {
         return steps;
     }
 
-    private List<GameState> search(GameSetting setting, GameHistory history, List<GameState> states) {
+    private Collection<GameState> search(GameSetting setting, GameHistory history, Collection<GameState> states) {
 
-        return states.stream()
-                .map(s -> GameUtils.nextMove(setting, history, s))
-                .flatMap(Collection::stream)
-                .distinct()
-                .map(s -> GameUtils.updateMovable(setting, s))
-                .collect(Collectors.toList());
+        Collection<GameState> nextStates = new LinkedList<>();
+
+        for (GameState state : states) {
+            Set<GameState> currNextStates = GameUtils.nextMove(setting, history, state);
+            for (GameState currNextState : currNextStates) {
+                GameUtils.updateMovable(setting, currNextState);
+
+                if (!history.exist(currNextState)
+                        && !GameUtils.isDead(setting, currNextState)){
+                    nextStates.add(currNextState);
+                }
+                history.add(currNextState);
+            }
+        }
+
+        return nextStates;
 
     }
 

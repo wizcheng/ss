@@ -7,6 +7,7 @@ public class GameState {
     private final Board box;
     private final Board movable;
     private GameState previousState;
+    private Spot player;
 
     public GameState(Board box, Board movable) {
         this.box = box;
@@ -18,17 +19,22 @@ public class GameState {
         return this;
     }
 
-    public List<Spot> boxes() {
-        return box.occupied();
+    public List<Spot> boxes(GameSetting setting) {
+        return box.occupied(setting);
     }
 
-    public List<Spot> movables(){
-        return movable.occupied();
-    }
-
-    public GameState setMovable(Spot spot, boolean value){
-        movable.set(spot, value);
+    public GameState setMovable(GameSetting gameSetting, Spot spot, boolean value){
+        movable.set(gameSetting.cols(), spot, value);
         return this;
+    }
+
+    public GameState setPlayer(Spot spot){
+        this.player = spot;
+        return this;
+    }
+
+    public Spot getPlayer(){
+        return this.player;
     }
 
     @Override
@@ -52,29 +58,32 @@ public class GameState {
     public GameState copy() {
         GameState gameState = new GameState(box.copy(), movable.copy());
         gameState.previousState = previousState;
+        gameState.player = player;
         return gameState;
     }
 
-    public boolean isBox(Spot s) {
-        return box.isOccupied(s);
+    public boolean isBox(GameSetting gameSetting, Spot s) {
+        return box.isOccupied(gameSetting.cols(), s);
     }
 
-    public GameState move(Spot currentSpot, Spot newSpot) {
-        if (box.isOccupied(currentSpot) && !box.isOccupied(newSpot)){
-            box.remove(currentSpot).add(newSpot);
+    public GameState move(GameSetting gameSetting, Spot currentSpot, Spot newSpot) {
+        if (box.isOccupied(gameSetting.cols(), currentSpot) && !box.isOccupied(gameSetting.cols(), newSpot)){
+            box.remove(gameSetting.cols(), currentSpot).add(gameSetting.cols(), newSpot);
         }
+        player = currentSpot;
         return this;
     }
 
-    public boolean haveBox(Spot s) {
-        return box.isOccupied(s);
-    }
-
-    public boolean isMovable(Spot p) {
-        return movable.isOccupied(p);
+    public boolean isMovable(GameSetting gameSetting, Spot p) {
+        return movable.isOccupied(gameSetting.cols(), p);
     }
 
     public GameState getPreviousState() {
         return previousState;
+    }
+
+    public void clearMovable() {
+        movable.clear();
+
     }
 }

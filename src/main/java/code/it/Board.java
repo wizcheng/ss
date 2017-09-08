@@ -1,32 +1,27 @@
 package code.it;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
 
 public class Board {
 
-    private final BitSet[] boxes;
+    private final BitSet boxes;
 
+    private Board(BitSet bitSet){
+        this.boxes = bitSet;
+    }
 
     public Board(int rows, int cols) {
-        boxes = new BitSet[rows];
-        for (int i = 0; i < rows; i++) {
-            boxes[i] = new BitSet(cols);
-        }
+        boxes = new BitSet(rows * cols);
     }
 
-    public Board(BitSet[] boxes) {
-        this.boxes = boxes;
+    private int position(int columns, Spot spot){
+        return spot.getRow() * columns + spot.getCol();
     }
 
-    public boolean isOccupied(int row, int col){
-        return boxes[row].get(col);
-    }
-
-    public boolean isOccupied(Spot spot){
-        return isOccupied(spot.getRow(), spot.getCol());
+    public boolean isOccupied(int columns, Spot spot){
+        return boxes.get(position(columns, spot));
     }
 
     @Override
@@ -36,21 +31,21 @@ public class Board {
 
         Board board = (Board) o;
 
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        return Arrays.equals(boxes, board.boxes);
+        return boxes.equals(board.boxes);
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(boxes);
+        return boxes.hashCode();
     }
 
-    public List<Spot> occupied() {
+    public List<Spot> occupied(GameSetting setting) {
         List<Spot> spots = new ArrayList<>();
-        for (int i = 0; i < boxes.length; i++) {
-            for (int j = 0; j < boxes[i].length(); j++) {
-                if (isOccupied(i, j)){
-                    spots.add(new Spot(i, j));
+        for (int row = 0; row < setting.rows(); row++) {
+            for (int col = 0; col < setting.cols(); col++) {
+                Spot spot = new Spot(row, col);
+                if (isOccupied(setting.cols(), spot)){
+                    spots.add(spot);
                 }
             }
         }
@@ -58,28 +53,23 @@ public class Board {
     }
 
     public Board copy() {
-        BitSet[] rowCopy = new BitSet[boxes.length];
-        for (int i = 0; i < rowCopy.length; i++) {
-            rowCopy[i] = new BitSet(boxes[i].length());
-            rowCopy[i].or(boxes[i]);
-        }
-        return new Board(rowCopy);
+        return new Board((BitSet) boxes.clone());
     }
 
-    public Board remove(Spot spot) {
-        boxes[spot.getRow()].clear(spot.getCol());
+    public Board remove(int columns, Spot spot) {
+        return set(columns, spot, false);
+    }
+
+    public Board add(int columns, Spot spot){
+        return set(columns, spot, true);
+    }
+
+    public Board set(int columns, Spot spot, boolean value) {
+        boxes.set(position(columns, spot), value);
         return this;
     }
 
-    public Board add(Spot spot){
-        boxes[spot.getRow()].set(spot.getCol());
-        return this;
+    public void clear() {
+        boxes.clear();
     }
-
-    public Board set(Spot spot, boolean value) {
-        boxes[spot.getRow()].set(spot.getCol(), value);
-        return this;
-    }
-
-
 }
