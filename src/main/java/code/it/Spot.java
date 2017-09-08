@@ -21,13 +21,13 @@ public class Spot {
         return col;
     }
 
-    public List<Spot> possibleMoves() {
-        return Arrays.asList(
-                new Spot(row-1, col),
-                new Spot(row+1, col),
-                new Spot(row, col-1),
-                new Spot(row, col+1)
-        );
+    public Spot[] possibleMoves() {
+        return new Spot[]{
+                new Spot(row - 1, col),
+                new Spot(row, col + 1),
+                new Spot(row + 1, col),
+                new Spot(row, col - 1)
+        };
     }
 
     public Spot otherSideOf(Spot spot) {
@@ -61,4 +61,19 @@ public class Spot {
     public String toString(){
         return "(" + row + ", " + col + ")";
     }
+
+    public boolean isValid() {
+        return row >= 0 && col >=0;
+    }
+
+    public Spot top(){ return new Spot(row - 1, col); }
+    public Spot left(){ return new Spot(row, col-1);}
+    public Spot bottom(){ return new Spot(row+1, col);}
+    public Spot right(){ return new Spot(row, col+1);}
+    public Spot topRight(){ return top().right(); }
+    public Spot topLeft(){ return top().left();}
+    public Spot bottomRight(){ return bottom().right(); }
+    public Spot bottomLeft(){ return bottom().left();}
+
+
 }

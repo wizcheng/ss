@@ -85,28 +85,28 @@ public class Main {
 //        lines.add("----x-----xxxxx");
 
         // level 21
-        lines.add("xxxxx-----xx");
-        lines.add("----x-   --x");
-        lines.add("-  ---o-  -x");
-        lines.add("- o ****- --");
-        lines.add("-  --****  -");
-        lines.add("-    o--o- -");
-        lines.add("- o-o   o  -");
-        lines.add("-- b ---o- -");
-        lines.add("x-----x-   -");
-        lines.add("xxxxxxx-----");
+//        lines.add("xxxxx-----xx");
+//        lines.add("----x-   --x");
+//        lines.add("-  ---o-  -x");
+//        lines.add("- o ****- --");
+//        lines.add("-  --****  -");
+//        lines.add("-    o--o- -");
+//        lines.add("- o-o   o  -");
+//        lines.add("-- b ---o- -");
+//        lines.add("x-----x-   -");
+//        lines.add("xxxxxxx-----");
 
         // level 25
-//        lines.add("------------xx");
-//        lines.add("-**  -     ---");
-//        lines.add("-**  - o  o  -");
-//        lines.add("-**  -o----  -");
-//        lines.add("-**    b --  -");
-//        lines.add("-**  - -  o --");
-//        lines.add("------ --o o -");
-//        lines.add("xx- o  o o o -");
-//        lines.add("xx-    -     -");
-//        lines.add("xx------------");
+        lines.add("------------xx");
+        lines.add("-**  -     ---");
+        lines.add("-**  - o  o  -");
+        lines.add("-**  -o----  -");
+        lines.add("-**    b --  -");
+        lines.add("-**  - -  o --");
+        lines.add("------ --o o -");
+        lines.add("xx- o  o o o -");
+        lines.add("xx-    -     -");
+        lines.add("xx------------");
 
 
 

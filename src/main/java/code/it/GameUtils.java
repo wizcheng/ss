@@ -16,14 +16,47 @@ public class GameUtils {
     private static long checkEnd = 0;
     private static long calculateNextMoveSingle = 0;
     private static long updateMovable = 0;
-    private static long startTimeMs = System.currentTimeMillis();
+    private static long checkHistory = 0;
+    private static long addHistory = 0;
 
+    private static long startTimeMs = System.currentTimeMillis();
     private static ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
 
     static  {
         service.scheduleAtFixedRate(() -> {
             printTimes();
         }, 30, 60, TimeUnit.SECONDS);
+    }
+
+    public static boolean isDead(GameSetting gameSetting, Spot spot) {
+        //
+        if (!isAlive(gameSetting, spot, -1, 0, 0, -1) && !isAlive(gameSetting, spot, 1, 0, 0, -1)){
+            return true;
+        } else if (!isAlive(gameSetting, spot, -1, 0, 0, 1) && !isAlive(gameSetting, spot, 1, 0, 0, 1)){
+            return true;
+        } else if (!isAlive(gameSetting, spot, 0, -1, -1, 0) && !isAlive(gameSetting, spot, 0, 1, -1, 0)){
+            return true;
+        } else if (!isAlive(gameSetting, spot, 0, -1, 1, 0) && !isAlive(gameSetting, spot, 0, 1, 1, 0)){
+            return true;
+        }
+
+        return false;
+    }
+
+    private static boolean isAlive(GameSetting gameSetting, Spot spot, int rowOffset, int colOffset, int rowOffsetToCheck, int colOffsetToCheck){
+        // check vertical
+        Spot spotToCheck = new Spot(spot.getRow() + rowOffsetToCheck, spot.getCol() + colOffsetToCheck);
+        if (gameSetting.isSpace(spotToCheck) || gameSetting.isGoal(spot)){
+            return true;
+        } else {
+            // try to move
+            Spot spotToMoveTo = new Spot(spot.getRow() + rowOffset, spot.getCol() + colOffset);
+            if (!gameSetting.isSpace(spotToMoveTo)){
+                return false;
+            } else {
+                return isAlive(gameSetting, spotToMoveTo, rowOffset, colOffset, rowOffsetToCheck, colOffsetToCheck);
+            }
+        }
     }
 
     public static void printTimes(){
@@ -33,8 +66,10 @@ public class GameUtils {
         System.out.println(String.format("checkEnd = %.2f ms", checkEnd/1_000_000.0));
         System.out.println(String.format("calculateNextMoveSingle = %.2f ms", calculateNextMoveSingle/1_000_000.0));
         System.out.println(String.format("updateMovable = %.2f ms", updateMovable/1_000_000.0));
+        System.out.println(String.format("checkHistory = %.2f ms", checkHistory/1_000_000.0));
+        System.out.println(String.format("addHistory = %.2f ms", addHistory/1_000_000.0));
         System.out.println("====================");
-        System.out.println(String.format("Total Time Taken = %.2f ms", System.currentTimeMillis() - startTimeMs));
+        System.out.println(String.format("Total Time Taken = %d ms", System.currentTimeMillis() - startTimeMs));
         System.out.println("--------------------");
     }
 
@@ -49,6 +84,15 @@ public class GameUtils {
         }
     }
 
+    private static Spot[][] deadZones(Spot spot){
+        return new Spot[][]{
+                new Spot[]{spot.topLeft(), spot.top(), spot.left()},
+                new Spot[]{spot.top(), spot.topRight(), spot.right()},
+                new Spot[]{spot.right(), spot.bottomRight(), spot.bottom()},
+                new Spot[]{spot.bottom(), spot.bottomLeft(), spot.left()}
+        };
+    }
+
     public static boolean isDead(GameSetting setting, GameState state){
         long start = System.nanoTime();
         try {
@@ -57,13 +101,30 @@ public class GameUtils {
 
                 if (!setting.isGoal(box)) {
 
-                    List<Spot> nonSpace = box.possibleMoves().stream()
-                            .filter(s -> !setting.isSpace(s))
-                            .collect(Collectors.toList());
-                    if (nonSpace.size() == 2 && nonSpace.get(0).isDiagonal(nonSpace.get(1))) {
-//                    System.out.println("box at " + box + " is dead");
+                    Spot[] spots = box.possibleMoves();
+                    if (!setting.isSpace(spots[0]) && !setting.isSpace(spots[1])) {
+                        return true;
+                    } else if (!setting.isSpace(spots[1]) && !setting.isSpace(spots[2])) {
+                        return true;
+                    } else if (!setting.isSpace(spots[2]) && !setting.isSpace(spots[3])) {
+                        return true;
+                    } else if (!setting.isSpace(spots[3]) && !setting.isSpace(spots[0])) {
                         return true;
                     }
+
+
+                    for (Spot[] deadZone : deadZones(box)) {
+                        if ((!setting.isSpace(deadZone[0]) || state.isBox(setting, deadZone[0]))
+                                && (!setting.isSpace(deadZone[1]) || state.isBox(setting, deadZone[1]))
+                                && (!setting.isSpace(deadZone[2]) || state.isBox(setting, deadZone[2])) ){
+                            return true;
+                        }
+                    }
+
+                    if (setting.isDeadZone(box)){
+                        return true;
+                    }
+
                 }
             }
             return false;
@@ -129,6 +190,7 @@ public class GameUtils {
         Board space = new Board(rows, cols);
         Board goal = new Board(rows, cols);
         Board wall = new Board(rows, cols);
+        Board deadzone = new Board(rows, cols);
         Spot player = null;
 
 //        #   (hash)      Wall
@@ -171,8 +233,20 @@ public class GameUtils {
         }
         GameState initialState = new GameState(box, movable);
         initialState.setPlayer(player);
+        GameSetting setting = new GameSetting(rows, cols, goal, space, wall, deadzone);
+
+        // mark deadzone
+        for (Spot spot : setting.spaces()) {
+            if (GameUtils.isDead(setting, spot)) {
+                setting.setDeadZone(spot);
+                System.out.println("Found deadzone: " + spot);
+            }
+        }
+
+
+
         return new Game(
-                new GameSetting(rows, cols, goal, space, wall),
+                setting,
                 initialState
         );
     }
@@ -180,14 +254,14 @@ public class GameUtils {
 
     private static void updateMovable(GameSetting gameSetting, GameState state, Spot current) {
 
-        List<Spot> spots = current.possibleMoves();
+        Spot[] spots = current.possibleMoves();
         for (Spot spot : spots) {
             if (state.isMovable(gameSetting, spot)){
                 // already visit
                 // about
             } else {
 
-                if (gameSetting.isSpace(spot) && !state.isBox(gameSetting, spot)){
+                if (spot.isValid() && gameSetting.isSpace(spot) && !state.isBox(gameSetting, spot)){
                     state.setMovable(gameSetting, spot, true);
                     updateMovable(gameSetting, state, spot);
                 } else {
@@ -197,6 +271,24 @@ public class GameUtils {
             }
         }
 
+    }
+
+    public static boolean inHistory(GameHistory history, GameState state) {
+        long start = System.nanoTime();
+        try {
+            return history.exist(state);
+        } finally {
+            checkHistory += System.nanoTime() - start;
+        }
+    }
+
+    public static void addHistory(GameHistory history, GameState state) {
+        long start = System.nanoTime();
+        try {
+            history.add(state);
+        } finally {
+            addHistory += System.nanoTime() - start;
+        }
     }
 
     public static void updateMovable(GameSetting gameSetting, GameState state) {
@@ -219,10 +311,14 @@ public class GameUtils {
     }
 
 
-
     private static String toHtml(Spot spot, String color, int border){
+        return toHtml(spot, color, border, 0.8);
+    }
+
+
+    private static String toHtml(Spot spot, String color, int border, double opacity){
         String borderStyle = border > 0 ? "border: solid 1px brown" : "";
-        return "<div style='background-color: "+color+"; top: "+spot.getRow()*10+"; left: "+spot.getCol()*10+"; width:10px; height:10px; position: absolute; opacity: 0.7; box-sizing: border-box; "+borderStyle+"'></div>";
+        return "<div style='background-color: "+color+"; top: "+spot.getRow()*10+"; left: "+spot.getCol()*10+"; width:10px; height:10px; position: absolute; opacity: "+opacity+"; box-sizing: border-box; "+borderStyle+"'></div>";
     }
 
     public static String toHtml(GameSetting settings, GameState state){
@@ -236,6 +332,10 @@ public class GameUtils {
                 .map(s -> toHtml(s, "white", 0))
                 .collect(Collectors.joining());
 
+        String deadzone = settings.deadzone().stream()
+                .map(s -> toHtml(s, "red", 0, 0.4))
+                .collect(Collectors.joining());
+
         String goal = settings.goals().stream()
                 .map(s -> toHtml(s, "yellow", 0))
                 .collect(Collectors.joining());
@@ -247,7 +347,7 @@ public class GameUtils {
         String player = toHtml(state.getPlayer(), "blue", 0);
 
         return "<div style='position:relative; width: "+settings.cols()*10+"px; height: "+settings.rows()*10+"px'>" +
-                space + wall + goal + boxes + player +
+                space + wall + deadzone + goal + boxes + player +
                 "</div>";
 
 

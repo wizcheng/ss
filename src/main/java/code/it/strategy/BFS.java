@@ -42,6 +42,7 @@ public class BFS implements Strategy {
         System.out.println(GameUtils.toString(GameUtils.toView(setting, initialState)));
         if (debug){
             debugLog.append(GameUtils.toHtml(setting, initialState));
+            logDebug(debugLog);
         }
 
         while(!gameCompleted && !gameFailed && step++<maxSteps){
@@ -73,6 +74,12 @@ public class BFS implements Strategy {
         else if (gameFailed) System.out.println("Game failed, no possible moves");
         else System.out.println("Game failed, exist max move(s) ("+maxSteps+")");
 
+        logDebug(debugLog);
+
+        return steps;
+    }
+
+    private void logDebug(StringBuilder debugLog) {
         if (debug){
             try {
                 FileUtils.writeStringToFile(new File("./debug.html"), "<html><body>"+debugLog.toString()+"</body></html>", "UTF-8");
@@ -80,8 +87,6 @@ public class BFS implements Strategy {
                 e.printStackTrace();
             }
         }
-
-        return steps;
     }
 
     private List<GameState> retrieveSteps(GameState state) {
@@ -103,8 +108,9 @@ public class BFS implements Strategy {
             for (GameState currNextState : currNextStates) {
                 GameUtils.updateMovable(setting, currNextState);
 
-                if (!history.exist(currNextState)
-                        && !GameUtils.isDead(setting, currNextState)){
+                if (!GameUtils.inHistory(history, currNextState)
+                        && !GameUtils.isDead(setting, currNextState)) {
+
                     nextStates.add(currNextState);
                 }
                 history.add(currNextState);
