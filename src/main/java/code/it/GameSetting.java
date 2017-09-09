@@ -1,6 +1,8 @@
 package code.it;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class GameSetting {
 
@@ -10,6 +12,7 @@ public class GameSetting {
     private final Board space;
     private final Board wall;
     private final Board deadzone;
+    private final Map<Spot, Integer> scoreMap;
 
     public GameSetting(int rows, int cols, Board goal, Board space, Board wall, Board deadzone) {
         this.rows = rows;
@@ -18,6 +21,7 @@ public class GameSetting {
         this.space = space;
         this.wall = wall;
         this.deadzone = deadzone;
+        this.scoreMap = new HashMap<>();
     }
 
     public int rows(){
@@ -63,5 +67,13 @@ public class GameSetting {
 
     public List<Spot> deadzone() {
         return deadzone.occupied(this);
+    }
+
+    public int getScroe(Spot spot) {
+        return scoreMap.getOrDefault(spot, 0);
+    }
+
+    public void setScore(Spot spot, int score){
+        scoreMap.put(spot, score);
     }
 }

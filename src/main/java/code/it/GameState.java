@@ -2,12 +2,13 @@ package code.it;
 
 import java.util.List;
 
-public class GameState {
+public class GameState implements Comparable<GameState> {
 
     private final Board box;
     private final Board movable;
     private GameState previousState;
     private Spot player;
+    private int score;
 
     public GameState(Board box, Board movable) {
         this.box = box;
@@ -31,6 +32,10 @@ public class GameState {
     public GameState setPlayer(Spot spot){
         this.player = spot;
         return this;
+    }
+
+    public void setScore(int score) {
+        this.score = score;
     }
 
     public Spot getPlayer(){
@@ -85,5 +90,15 @@ public class GameState {
     public void clearMovable() {
         movable.clear();
 
+    }
+
+    @Override
+    public int compareTo(GameState o) {
+        return o.score - score;
+    }
+
+    public int getScore() {
+
+        return score;
     }
 }

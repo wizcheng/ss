@@ -1,9 +1,6 @@
 package code.it;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -11,13 +8,16 @@ import java.util.stream.Collectors;
 
 public class GameUtils {
 
-    private static long checkDead = 0;
-    private static long checkPossible = 0;
-    private static long checkEnd = 0;
-    private static long calculateNextMoveSingle = 0;
-    private static long updateMovable = 0;
-    private static long checkHistory = 0;
-    private static long addHistory = 0;
+    private static long checkDead;
+    private static long checkPossible;
+    private static long checkEnd;
+    private static long calculateNextMoveSingle;
+    private static long updateMovable;
+    private static long checkHistory;
+    private static long addHistory;
+    private static long calculateAverage;
+    private static long createList;
+    private static long sorting;
 
     private static long startTimeMs = System.currentTimeMillis();
     private static ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
@@ -26,6 +26,24 @@ public class GameUtils {
         service.scheduleAtFixedRate(() -> {
             printTimes();
         }, 30, 60, TimeUnit.SECONDS);
+    }
+
+
+    public static void printTimes(){
+        System.out.println("--------------------");
+        System.out.println(String.format("checkDead = %.2f ms", checkDead/1_000_000.0));
+        System.out.println(String.format("checkPossible = %.2f ms", checkPossible/1_000_000.0));
+        System.out.println(String.format("checkEnd = %.2f ms", checkEnd/1_000_000.0));
+        System.out.println(String.format("calculateNextMoveSingle = %.2f ms", calculateNextMoveSingle/1_000_000.0));
+        System.out.println(String.format("updateMovable = %.2f ms", updateMovable/1_000_000.0));
+        System.out.println(String.format("checkHistory = %.2f ms", checkHistory/1_000_000.0));
+        System.out.println(String.format("addHistory = %.2f ms", addHistory/1_000_000.0));
+        System.out.println(String.format("calculateAverage = %.2f ms", calculateAverage/1_000_000.0));
+        System.out.println(String.format("createList = %.2f ms", createList/1_000_000.0));
+        System.out.println(String.format("sorting = %.2f ms", sorting/1_000_000.0));
+        System.out.println("====================");
+        System.out.println(String.format("Total Time Taken = %d ms", System.currentTimeMillis() - startTimeMs));
+        System.out.println("--------------------");
     }
 
     public static boolean isDead(GameSetting gameSetting, Spot spot) {
@@ -59,19 +77,49 @@ public class GameUtils {
         }
     }
 
-    public static void printTimes(){
-        System.out.println("--------------------");
-        System.out.println(String.format("checkDead = %.2f ms", checkDead/1_000_000.0));
-        System.out.println(String.format("checkPossible = %.2f ms", checkPossible/1_000_000.0));
-        System.out.println(String.format("checkEnd = %.2f ms", checkEnd/1_000_000.0));
-        System.out.println(String.format("calculateNextMoveSingle = %.2f ms", calculateNextMoveSingle/1_000_000.0));
-        System.out.println(String.format("updateMovable = %.2f ms", updateMovable/1_000_000.0));
-        System.out.println(String.format("checkHistory = %.2f ms", checkHistory/1_000_000.0));
-        System.out.println(String.format("addHistory = %.2f ms", addHistory/1_000_000.0));
-        System.out.println("====================");
-        System.out.println(String.format("Total Time Taken = %d ms", System.currentTimeMillis() - startTimeMs));
-        System.out.println("--------------------");
+    private static double distance(Spot spot1, Spot spot2){
+        double dr = spot1.getRow() - spot2.getRow();
+        double dc = spot1.getCol() - spot2.getCol();
+        double distance = dr * dr + dc * dc;
+        return distance;
     }
+
+    public static int score(GameSetting setting, GameState state){
+
+        long start = System.nanoTime();
+        try {
+
+            int score = 0;
+            for (Spot box : state.boxes(setting)) {
+                score += setting.getScroe(box);
+            }
+            return score;
+        } finally {
+            calculateAverage += System.nanoTime() - start;
+        }
+    }
+
+    public static Collection<GameState> reduceByScore(GameSetting setting, Collection<GameState> states, int max){
+        double total = 0;
+        for (GameState nextState : states) {
+            int distance = GameUtils.score(setting, nextState);
+            total += distance;
+            nextState.setScore(distance);
+        }
+        System.out.println(String.format("Average score = %.3f", total / states.size()));
+
+        long start = System.nanoTime();
+        List<GameState> sorted = new ArrayList<>(states);
+        createList += System.nanoTime() - start;
+
+        long startSort = System.nanoTime();
+        Collections.sort(sorted);
+        sorting += System.nanoTime() - startSort;
+
+        return sorted.subList(0, max);
+    }
+
+
 
     private static boolean isPossible(GameSetting gameSetting, GameState state, Spot box, Spot spot){
         long start = System.nanoTime();
@@ -133,7 +181,7 @@ public class GameUtils {
         }
     }
 
-    private static List<Spot> possibleSpots(GameSetting gameSetting, GameState state, Spot box) {
+    public static List<Spot> possibleSpots(GameSetting gameSetting, GameState state, Spot box) {
 
         List<Spot> nextSpots = new ArrayList<>(4);
         for (Spot spot : box.possibleMoves()) {
@@ -244,6 +292,8 @@ public class GameUtils {
         }
 
 
+        // calculate distance
+        GameUtils.calculateScore(setting);
 
         return new Game(
                 setting,
@@ -321,7 +371,17 @@ public class GameUtils {
         return "<div style='background-color: "+color+"; top: "+spot.getRow()*10+"; left: "+spot.getCol()*10+"; width:10px; height:10px; position: absolute; opacity: "+opacity+"; box-sizing: border-box; "+borderStyle+"'></div>";
     }
 
+    private static String toHtml(GameSetting setting, Spot spot){
+        int label = setting.getScroe(spot);
+        return "<div style='color: #000; line-height:1; font-size:9px; top: "+spot.getRow()*10+"; left: "+spot.getCol()*10+"; width:10px; height:10px; text-align: center; position: absolute; opacity: 0.8; box-sizing: border-box;'>"+label+"</div>";
+    }
+
     public static String toHtml(GameSetting settings, GameState state){
+        return toHtml(settings, state, false);
+
+    }
+
+    public static String toHtml(GameSetting settings, GameState state, boolean includeScore){
 
 
         String wall = settings.walls().stream()
@@ -344,10 +404,19 @@ public class GameUtils {
                 .map(s -> toHtml(s, "orange", 1))
                 .collect(Collectors.joining());
 
+        String score = "";
+        if (includeScore) {
+            score = settings.spaces().stream()
+                    .map(s -> toHtml(settings, s))
+                    .collect(Collectors.joining());
+        }
+
         String player = toHtml(state.getPlayer(), "blue", 0);
 
+        String distance = "<div>"+state.getScore()+"</div>";
+
         return "<div style='position:relative; width: "+settings.cols()*10+"px; height: "+settings.rows()*10+"px'>" +
-                space + wall + deadzone + goal + boxes + player +
+                space + wall + deadzone + goal + boxes + player + distance + score +
                 "</div>";
 
 
@@ -377,6 +446,33 @@ public class GameUtils {
         }
         return results;
     }
+
+
+
+    private static void calculateScore(GameSetting setting, Spot spot, int score){
+
+        if (score > setting.getScroe(spot)){
+            setting.setScore(spot, Math.max(0, score));
+
+            for (Spot next : spot.possibleMoves()) {
+                if (setting.isSpace(spot) && !setting.isDeadZone(spot)){
+                    calculateScore(setting, next, score - 3);
+                }
+            }
+        } else {
+            // do nothing
+        }
+
+    }
+
+    public static void calculateScore(GameSetting setting) {
+        for (Spot spot : setting.goals()) {
+            calculateScore(setting, spot, 30);
+        }
+    }
+
+
+
 
     public static class Game {
 

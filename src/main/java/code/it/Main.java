@@ -1,6 +1,8 @@
 package code.it;
 
 import code.it.strategy.BFS;
+import code.it.strategy.ScroeBase;
+import code.it.strategy.Strategy;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -13,6 +15,7 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
 
+        // https://gitlab.com/codeitsuissehk2017/sokoban/blob/master/resource/maps/map27.json
 
         List<String> lines = new ArrayList<>();
 
@@ -27,13 +30,13 @@ public class Main {
 //        lines.add("xxx---xx");
 
         // level 8
-//        lines.add("xxx------x");
-//        lines.add("x---    -x");
-//        lines.add("--* o-- --");
-//        lines.add("-**o o  b-");
-//        lines.add("-** o o --");
-//        lines.add("------  -x");
-//        lines.add("xxxxx----x");
+        lines.add("xxx------x");
+        lines.add("x---    -x");
+        lines.add("--* o-- --");
+        lines.add("-**o o  b-");
+        lines.add("-** o o --");
+        lines.add("------  -x");
+        lines.add("xxxxx----x");
 
         // level 13
 //        lines.add("xx--------");
@@ -97,17 +100,50 @@ public class Main {
 //        lines.add("xxxxxxx-----");
 
         // level 25
-        lines.add("------------xx");
-        lines.add("-**  -     ---");
-        lines.add("-**  - o  o  -");
-        lines.add("-**  -o----  -");
-        lines.add("-**    b --  -");
-        lines.add("-**  - -  o --");
-        lines.add("------ --o o -");
-        lines.add("xx- o  o o o -");
-        lines.add("xx-    -     -");
-        lines.add("xx------------");
+//        lines.add("------------xx");
+//        lines.add("-**  -     ---");
+//        lines.add("-**  - o  o  -");
+//        lines.add("-**  -o----  -");
+//        lines.add("-**    b --  -");
+//        lines.add("-**  - -  o --");
+//        lines.add("------ --o o -");
+//        lines.add("xx- o  o o o -");
+//        lines.add("xx-    -     -");
+//        lines.add("xx------------");
 
+        // 27
+//        lines.add("xx----xxxxxxxxxx");
+//        lines.add("xx-  -----------");
+//        lines.add("xx-    o   o o -");
+//        lines.add("xx- o- o -  o  -");
+//        lines.add("xx-  o o  -    -");
+//        lines.add("--- o- -  ---- -");
+//        lines.add("-b-o o o  --   -");
+//        lines.add("-    o -o-   - -");
+//        lines.add("--  o    o o o -");
+//        lines.add("x---- ----------");
+//        lines.add("x-      -xxxxxxx");
+//        lines.add("x-      -xxxxxxx");
+//        lines.add("x-******-xxxxxxx");
+//        lines.add("x-******-xxxxxxx");
+//        lines.add("x-******-xxxxxxx");
+//        lines.add("x--------xxxxxxx");
+
+
+        // 28
+//        lines.add("xxxxxxxxxxxxxx--------");
+//        lines.add("xxxxxxxxxxxxxx-  ****-");
+//        lines.add("xxx------------  ****-");
+//        lines.add("xxx-    -  o o   ****-");
+//        lines.add("xxx- ooo-o  o -  ****-");
+//        lines.add("xxx-  o     o -  ****-");
+//        lines.add("xxx- oo -o o o--------");
+//        lines.add("----  o -     -xxxxxxx");
+//        lines.add("-   - ---------xxxxxxx");
+//        lines.add("-    o  --xxxxxxxxxxxx");
+//        lines.add("- oo-oo b-xxxxxxxxxxxx");
+//        lines.add("-   -   --xxxxxxxxxxxx");
+//        lines.add("---------xxxxxxxxxxxxx");
 
 
 
@@ -133,7 +169,8 @@ public class Main {
         GameHistory history = GameUtils.createHistory();
         GameUtils.Game game = GameUtils.init(lines);
 
-        BFS strategy = new BFS(1000);
+        Strategy strategy = new BFS(1000);
+//        Strategy strategy = new ScroeBase();
         List<GameState> steps = strategy.solve(game.setting, history, game.initialState);
 
         System.out.println("Number of steps " + steps.size());

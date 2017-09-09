@@ -1,25 +1,20 @@
 package code.it.strategy;
 
-import code.it.GameHistory;
-import code.it.GameSetting;
-import code.it.GameState;
-import code.it.GameUtils;
+import code.it.*;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class BFS implements Strategy {
+public class ScroeBase implements Strategy {
 
     private boolean debug = true;
-    private int maxSteps;
+    private int maxSteps = 10000;
+    private int depth = 5;
+    private int selection = 40;
     private int maxWidth = 10_000;
     private int triggerWidth = 300_000;
-
-    public BFS(int maxSteps) {
-        this.maxSteps = maxSteps;
-    }
 
     @Override
     public List<GameState> solve(GameSetting setting, GameHistory history, GameState initialState) {
@@ -28,16 +23,15 @@ public class BFS implements Strategy {
         System.out.println("Game settings ----");
         System.out.println(GameUtils.toString(GameUtils.toView(setting, initialState)));
 
+        GameState state = initialState.copy();
+        GameUtils.updateMovable(setting, state);
+
         boolean gameCompleted = false;
         boolean gameFailed = false;
         int step = 0;
 
-        GameState endState = null;
-        Collection<GameState> currentStates = new LinkedList<>();
-        GameState state = initialState.copy();
-        GameUtils.updateMovable(setting, state);
+        Collection<GameState> currentStates = new ArrayList<>();
         currentStates.add(state);
-        history.add(state);
 
         System.out.println("Start ----");
         System.out.println(GameUtils.toString(GameUtils.toView(setting, initialState)));
@@ -46,13 +40,18 @@ public class BFS implements Strategy {
             logDebug(debugOutput);
         }
 
-        while(!gameCompleted && !gameFailed && step++<maxSteps){
+        GameState endState = null;
 
-            System.out.println(String.format("Iteration %d, states=%d, history=%d", step, currentStates.size(), history.size()));
+        do {
 
-            Collection<GameState> nextStates = search(setting, history, currentStates);
 
-            if (nextStates.size()==0){
+            List<GameState> nextStates = new LinkedList<>();
+            for (GameState currentState : currentStates) {
+                nextMoves(history, setting, currentState, nextStates);
+            }
+
+
+            if (nextStates.size() == 0) {
                 gameFailed = true;
             } else {
                 for (GameState nextState : nextStates) {
@@ -64,7 +63,7 @@ public class BFS implements Strategy {
 
             }
 
-            if (nextStates.size() > triggerWidth){
+            if (nextStates.size() > triggerWidth) {
                 // try reduce it
                 System.out.println("Try to reduce width from " + nextStates.size() + " to " + maxWidth);
                 currentStates = GameUtils.reduceByScore(setting, nextStates, maxWidth);
@@ -74,17 +73,15 @@ public class BFS implements Strategy {
 
             }
 
-
             // with 5 out
             int i = 0;
             int size = currentStates.size();
             int[] dumps = new int[]{
-                (int) (size * 0),
-                (int) (size * 0.25),
-                (int) (size * 0.5),
-                (int) (size * 0.75)
+                    (int) (size * 0),
+                    (int) (size * 0.25),
+                    (int) (size * 0.5),
+                    (int) (size * 0.75)
             };
-
             debugOutput.append(String.format("Iteration %d, states=%d, history=%d<br/>", step, currentStates.size(), history.size()));
             debugOutput.append("<div style='display: flex'>");
             for (GameState nextState : currentStates) {
@@ -99,7 +96,11 @@ public class BFS implements Strategy {
             logDebug(debugOutput);
 
 
-        }
+            step++;
+
+        } while (!gameCompleted && !gameFailed && step++ < maxSteps);
+
+
 
         List<GameState> steps = retrieveSteps(endState);
         if (steps.size() > 0 ){
@@ -121,6 +122,38 @@ public class BFS implements Strategy {
         return steps;
     }
 
+    private void nextMoves(GameHistory history, GameSetting setting, GameState state, List<GameState> nextStates) {
+        for (Spot box : state.boxes(setting)) {
+            nextMoves(history, setting, state, box, depth, nextStates);
+        }
+    }
+
+    private void nextMoves(GameHistory history, GameSetting setting, GameState state, Spot box, int depth, List<GameState> nextStates) {
+
+        if (depth <= 0){
+            return;
+        }
+
+        List<Spot> spots = GameUtils.possibleSpots(setting, state, box);
+        for (Spot newSpot : spots) {
+
+            GameState newState = state.copy().move(setting, box, newSpot);
+            GameUtils.updateMovable(setting, newState);
+
+            if (!GameUtils.isDead(setting, state)
+                    && !GameUtils.inHistory(history, state)){
+                GameUtils.addHistory(history, state);
+                nextStates.add(newState);
+
+                nextMoves(history, setting, newState, newSpot, depth-1, nextStates);
+
+            } else {
+                //
+            }
+
+        }
+    }
+
     private void logDebug(StringBuilder debugLog) {
         if (debug){
             try {
@@ -140,28 +173,4 @@ public class BFS implements Strategy {
         Collections.reverse(steps);
         return steps;
     }
-
-    private Collection<GameState> search(GameSetting setting, GameHistory history, Collection<GameState> states) {
-
-        Collection<GameState> nextStates = new LinkedList<>();
-
-        for (GameState state : states) {
-            Set<GameState> currNextStates = GameUtils.nextMove(setting, history, state);
-            for (GameState currNextState : currNextStates) {
-                GameUtils.updateMovable(setting, currNextState);
-
-                if (!GameUtils.inHistory(history, currNextState)
-                        && !GameUtils.isDead(setting, currNextState)) {
-
-                    nextStates.add(currNextState);
-                }
-                GameUtils.addHistory(history, currNextState);
-            }
-        }
-
-        return nextStates;
-
-    }
-
-
 }

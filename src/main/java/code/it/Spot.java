@@ -76,4 +76,21 @@ public class Spot {
     public Spot bottomLeft(){ return bottom().left();}
 
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Spot spot = (Spot) o;
+
+        if (row != spot.row) return false;
+        return col == spot.col;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = row;
+        result = 31 * result + col;
+        return result;
+    }
 }
