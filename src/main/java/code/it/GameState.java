@@ -8,11 +8,21 @@ public class GameState implements Comparable<GameState> {
     private final Board movable;
     private GameState previousState;
     private Spot player;
+    private Spot playerPrevious;
     private int score;
+    private boolean interm;
 
     public GameState(Board box, Board movable) {
         this.box = box;
         this.movable = movable;
+    }
+
+    public boolean isInterm() {
+        return interm;
+    }
+
+    public void setInterm(boolean interm) {
+        this.interm = interm;
     }
 
     public GameState setPreviousState(GameState previousState){
@@ -76,11 +86,16 @@ public class GameState implements Comparable<GameState> {
             box.remove(gameSetting.cols(), currentSpot).add(gameSetting.cols(), newSpot);
         }
         player = currentSpot;
+        playerPrevious = currentSpot.calculatePath(newSpot);
         return this;
     }
 
     public boolean isMovable(GameSetting gameSetting, Spot p) {
         return movable.isOccupied(gameSetting.cols(), p);
+    }
+
+    public boolean notMovable(GameSetting gameSetting, Spot p) {
+        return !movable.isOccupied(gameSetting.cols(), p);
     }
 
     public GameState getPreviousState() {
@@ -100,5 +115,9 @@ public class GameState implements Comparable<GameState> {
     public int getScore() {
 
         return score;
+    }
+
+    public Spot getPlayerPrevious() {
+        return playerPrevious;
     }
 }

@@ -151,7 +151,7 @@ public class BFS implements Strategy {
                 GameUtils.updateMovable(setting, currNextState);
 
                 if (!GameUtils.inHistory(history, currNextState)
-                        && !GameUtils.isDead(setting, currNextState)) {
+                        && !GameUtils.isDeadSpot(setting, currNextState)) {
 
                     nextStates.add(currNextState);
                 }

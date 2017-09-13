@@ -40,6 +40,10 @@ public class GameSetting {
         return space.isOccupied(cols(), s);
     }
 
+    public boolean notSpace(Spot s) {
+        return !space.isOccupied(cols(), s);
+    }
+
     public boolean isDeadZone(Spot s){
         return deadzone.isOccupied(cols(), s);
     }

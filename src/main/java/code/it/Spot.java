@@ -8,9 +8,19 @@ public class Spot {
     private int row;
     private int col;
 
+    private Spot previous;
+
     public Spot(int row, int col) {
         this.row = row;
         this.col = col;
+    }
+
+    public Spot getPrevious() {
+        return previous;
+    }
+
+    public void setPrevious(Spot previous) {
+        this.previous = previous;
     }
 
     public int getRow() {
@@ -92,5 +102,24 @@ public class Spot {
         int result = row;
         result = 31 * result + col;
         return result;
+    }
+
+    public Spot calculatePath(Spot newSpot) {
+        int deltaRow = newSpot.row - row;
+        int deltaCol = newSpot.col - col;
+        return new Spot(row - deltaRow, col - deltaCol);
+    }
+
+    public String moveTo(Spot next) {
+        if (next.equals(top())){
+            return "up";
+        } else if (next.equals(left())) {
+            return "left";
+        } else if (next.equals(bottom())) {
+            return "down";
+        } else if (next.equals(right())) {
+            return "right";
+        }
+        throw new IllegalStateException("Unable to translate to move, from=" + this + ", to=" + next);
     }
 }

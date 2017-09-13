@@ -46,8 +46,13 @@ public class GameUtils {
         System.out.println("--------------------");
     }
 
-    public static boolean isDead(GameSetting gameSetting, Spot spot) {
-        //
+    public static boolean isDeadSpot(GameSetting gameSetting, Spot spot) {
+
+        if (gameSetting.isGoal(spot)){
+            return false;
+        }
+
+        // un-recoverable side
         if (!isAlive(gameSetting, spot, -1, 0, 0, -1) && !isAlive(gameSetting, spot, 1, 0, 0, -1)){
             return true;
         } else if (!isAlive(gameSetting, spot, -1, 0, 0, 1) && !isAlive(gameSetting, spot, 1, 0, 0, 1)){
@@ -57,6 +62,18 @@ public class GameUtils {
         } else if (!isAlive(gameSetting, spot, 0, -1, 1, 0) && !isAlive(gameSetting, spot, 0, 1, 1, 0)){
             return true;
         }
+
+        // conner
+        if (!gameSetting.isSpace(spot.top()) && !gameSetting.isSpace(spot.right())) {
+            return true;
+        } else if (!gameSetting.isSpace(spot.bottom()) && !gameSetting.isSpace(spot.right())) {
+            return true;
+        } else if (!gameSetting.isSpace(spot.top()) && !gameSetting.isSpace(spot.left())) {
+            return true;
+        } else if (!gameSetting.isSpace(spot.bottom()) && !gameSetting.isSpace(spot.left())) {
+            return true;
+        }
+
 
         return false;
     }
@@ -132,16 +149,28 @@ public class GameUtils {
         }
     }
 
-    private static Spot[][] deadZones(Spot spot){
+    private static Spot[][] deadGroups(Spot spot){
         return new Spot[][]{
                 new Spot[]{spot.topLeft(), spot.top(), spot.left()},
                 new Spot[]{spot.top(), spot.topRight(), spot.right()},
                 new Spot[]{spot.right(), spot.bottomRight(), spot.bottom()},
-                new Spot[]{spot.bottom(), spot.bottomLeft(), spot.left()}
+                new Spot[]{spot.bottom(), spot.bottomLeft(), spot.left()},
+
+
+//                new Spot[]{
+//                        spot.left(), spot.topLeft(), spot.bottomLeft(),
+//                        spot.topRight(), spot.bottomRight(),
+//                        spot.right().topRight(), spot.right().right(), spot.right().bottomRight()
+//                },
+//                new Spot[]{
+//                        spot.left().left(), spot.left().topLeft(), spot.left().bottomLeft(),
+//                        spot.topLeft(), spot.bottomLeft(),
+//                        spot.topRight(), spot.right(), spot.bottomRight()
+//                },
         };
     }
 
-    public static boolean isDead(GameSetting setting, GameState state){
+    public static boolean isDeadSpot(GameSetting setting, GameState state){
         long start = System.nanoTime();
         try {
             List<Spot> boxes = state.boxes(setting);
@@ -149,28 +178,61 @@ public class GameUtils {
 
                 if (!setting.isGoal(box)) {
 
-                    Spot[] spots = box.possibleMoves();
-                    if (!setting.isSpace(spots[0]) && !setting.isSpace(spots[1])) {
-                        return true;
-                    } else if (!setting.isSpace(spots[1]) && !setting.isSpace(spots[2])) {
-                        return true;
-                    } else if (!setting.isSpace(spots[2]) && !setting.isSpace(spots[3])) {
-                        return true;
-                    } else if (!setting.isSpace(spots[3]) && !setting.isSpace(spots[0])) {
+//                    Spot[] spots = box.possibleMoves();
+//                    if (!setting.isSpace(spots[0]) && !setting.isSpace(spots[1])) {
+//                        return true;
+//                    } else if (!setting.isSpace(spots[1]) && !setting.isSpace(spots[2])) {
+//                        return true;
+//                    } else if (!setting.isSpace(spots[2]) && !setting.isSpace(spots[3])) {
+//                        return true;
+//                    } else if (!setting.isSpace(spots[3]) && !setting.isSpace(spots[0])) {
+//                        return true;
+//                    }
+
+                    if (setting.isDeadZone(box)){
                         return true;
                     }
 
+                    // group of box causing dead
+                    for (Spot[] deadZone : deadGroups(box)) {
+                        boolean dead = true;
+                        for (Spot spot : deadZone) {
+                            if (!spot.isValid()){
+                                dead = false;
+                                break;
+                            }
 
-                    for (Spot[] deadZone : deadZones(box)) {
-                        if ((!setting.isSpace(deadZone[0]) || state.isBox(setting, deadZone[0]))
-                                && (!setting.isSpace(deadZone[1]) || state.isBox(setting, deadZone[1]))
-                                && (!setting.isSpace(deadZone[2]) || state.isBox(setting, deadZone[2])) ){
+                            if (setting.isSpace(spot) && !state.isBox(setting, spot)){
+                                dead = false;
+                                break;
+                            }
+                        }
+                        if (dead){
                             return true;
                         }
                     }
 
-                    if (setting.isDeadZone(box)){
-                        return true;
+                    // blocking hallway
+                    if (setting.notSpace(box.top()) && setting.notSpace(box.bottom())){
+                        if (state.isBox(setting, box.left())){
+                            if (state.notMovable(setting, box.topLeft()) && state.notMovable(setting, box.bottomLeft())){
+                                return true;
+                            }
+                        } else if (state.isBox(setting, box.right())){
+                            if (state.notMovable(setting, box.topRight()) && state.notMovable(setting, box.bottomRight())){
+                                return true;
+                            }
+                        }
+                    } else if (setting.notSpace(box.left()) && setting.notSpace(box.right())){
+                        if (state.isBox(setting, box.top())){
+                            if (state.notMovable(setting, box.topLeft()) && state.notMovable(setting, box.topRight())){
+                                return true;
+                            }
+                        } else if (state.isBox(setting, box.bottom())){
+                            if (state.notMovable(setting, box.bottomLeft()) && state.notMovable(setting, box.bottomRight())){
+                                return true;
+                            }
+                        }
                     }
 
                 }
@@ -285,7 +347,7 @@ public class GameUtils {
 
         // mark deadzone
         for (Spot spot : setting.spaces()) {
-            if (GameUtils.isDead(setting, spot)) {
+            if (GameUtils.isDeadSpot(setting, spot)) {
                 setting.setDeadZone(spot);
                 System.out.println("Found deadzone: " + spot);
             }
@@ -368,12 +430,12 @@ public class GameUtils {
 
     private static String toHtml(Spot spot, String color, int border, double opacity){
         String borderStyle = border > 0 ? "border: solid 1px brown" : "";
-        return "<div style='background-color: "+color+"; top: "+spot.getRow()*10+"; left: "+spot.getCol()*10+"; width:10px; height:10px; position: absolute; opacity: "+opacity+"; box-sizing: border-box; "+borderStyle+"'></div>";
+        return "<div style='background-color: "+color+"; top: "+spot.getRow()*10+"px; left: "+spot.getCol()*10+"px; width:10px; height:10px; position: absolute; opacity: "+opacity+"; box-sizing: border-box; "+borderStyle+"'></div>";
     }
 
     private static String toHtml(GameSetting setting, Spot spot){
         int label = setting.getScroe(spot);
-        return "<div style='color: #000; line-height:1; font-size:9px; top: "+spot.getRow()*10+"; left: "+spot.getCol()*10+"; width:10px; height:10px; text-align: center; position: absolute; opacity: 0.8; box-sizing: border-box;'>"+label+"</div>";
+        return "<div style='color: #000; line-height:1; font-size:9px; top: "+spot.getRow()*10+"px; left: "+spot.getCol()*10+"px; width:10px; height:10px; text-align: center; position: absolute; opacity: 0.8; box-sizing: border-box;'>"+label+"</div>";
     }
 
     public static String toHtml(GameSetting settings, GameState state){
@@ -386,29 +448,29 @@ public class GameUtils {
 
         String wall = settings.walls().stream()
                 .map(s -> toHtml(s, "black", 0))
-                .collect(Collectors.joining());
+                .collect(Collectors.joining("\n"));
 
         String space = settings.spaces().stream()
                 .map(s -> toHtml(s, "white", 0))
-                .collect(Collectors.joining());
+                .collect(Collectors.joining("\n"));
 
         String deadzone = settings.deadzone().stream()
                 .map(s -> toHtml(s, "red", 0, 0.4))
-                .collect(Collectors.joining());
+                .collect(Collectors.joining("\n"));
 
         String goal = settings.goals().stream()
                 .map(s -> toHtml(s, "yellow", 0))
-                .collect(Collectors.joining());
+                .collect(Collectors.joining("\n"));
 
         String boxes = state.boxes(settings).stream()
                 .map(s -> toHtml(s, "orange", 1))
-                .collect(Collectors.joining());
+                .collect(Collectors.joining("\n"));
 
         String score = "";
         if (includeScore) {
             score = settings.spaces().stream()
                     .map(s -> toHtml(settings, s))
-                    .collect(Collectors.joining());
+                    .collect(Collectors.joining("\n"));
         }
 
         String player = toHtml(state.getPlayer(), "blue", 0);
@@ -456,7 +518,8 @@ public class GameUtils {
 
             for (Spot next : spot.possibleMoves()) {
                 if (setting.isSpace(spot) && !setting.isDeadZone(spot)){
-                    calculateScore(setting, next, score - 3);
+                    int reduction = setting.isGoal(next) ? -1 : -3;
+                    calculateScore(setting, next, score + reduction);
                 }
             }
         } else {
@@ -466,11 +529,117 @@ public class GameUtils {
     }
 
     public static void calculateScore(GameSetting setting) {
+
+        int baseScroe = 40;
+
         for (Spot spot : setting.goals()) {
-            calculateScore(setting, spot, 30);
+            calculateScore(setting, spot, baseScroe);
         }
+
+        for (Spot spot : setting.goals()) {
+            int additionalScore = 0;
+            for (Spot possibleNextSpot : spot.possibleMoves()) {
+                if (setting.isWall(possibleNextSpot)){
+                    additionalScore += 5;
+                }
+            }
+            setting.setScore(spot, baseScroe + additionalScore);
+            calculateScore(setting, spot, baseScroe);
+        }
+
     }
 
+
+
+    public static List<GameState> searchPlayerMoves(GameSetting setting, GameState from, GameState to){
+        Spot start = from.getPlayer();
+        Spot end = to.getPlayerPrevious();
+        if (start.equals(end)) {
+            return Collections.emptyList();
+        }
+        List<Spot> playerMoves = searchMove(setting, from, start, end);
+        playerMoves.remove(0);
+        List<GameState> states = new LinkedList<>();
+        for (Spot moveTo : playerMoves) {
+            states.add(from.copy().setPlayer(moveTo));
+        }
+        return states;
+    }
+
+    public static List<Spot> searchMove(GameSetting setting, GameState state, Spot from, Spot to){
+
+        Set<Spot> historicalMoves = new HashSet<>();
+        historicalMoves.add(from);
+
+        Spot last = searchMove(setting, state, historicalMoves, Arrays.asList(from), to);
+        if (last==null){
+            throw new IllegalStateException("Unable to from path from " + from + " to " + to);
+        }
+
+        List<Spot> moves = new LinkedList<>();
+        moves.add(last);
+        while(last.getPrevious()!=null){
+            moves.add(last.getPrevious());
+            last = last.getPrevious();
+        }
+        Collections.reverse(moves);
+
+        int lastIdx = moves.size() - 1;
+        if (!from.equals(moves.get(0))) throw new IllegalStateException("Invalid from, expect " + from + ", got " + moves.get(0));
+        if (!to.equals(moves.get(lastIdx))) throw new IllegalStateException("Invalid to, expect " + to + ", got " + moves.get(lastIdx));
+
+        return moves;
+
+    }
+
+    private static Spot searchMove(GameSetting setting, GameState state, Set<Spot> historicalMoves, List<Spot> curr, Spot to){
+
+        if (curr.isEmpty()){
+            return null;
+        }
+
+
+        while(!curr.isEmpty()){
+
+            Set<Spot> nextToSearch = new HashSet<>();
+            for (Spot spot : curr) {
+                for (Spot nextSpot : spot.possibleMoves()) {
+                    if (!historicalMoves.contains(nextSpot) && setting.isSpace(nextSpot) && !state.isBox(setting, nextSpot)){
+                        nextSpot.setPrevious(spot);
+
+                        if (nextSpot.equals(to)){
+                            return nextSpot;
+                        }
+                        nextToSearch.add(nextSpot);
+                    }
+                }
+            }
+
+            historicalMoves.addAll(nextToSearch);
+
+            curr = new ArrayList<>(nextToSearch);
+
+        }
+
+        return null;
+
+
+    }
+
+
+    public static List<String> translateToMove(List<GameState> steps){
+
+        List<String> moves = new ArrayList<>();
+        GameState prev = null;
+        for (GameState step : steps) {
+            if (prev!=null){
+                moves.add(prev.getPlayer().moveTo(step.getPlayer()));
+            }
+            prev = step;
+        }
+        return moves;
+
+    }
 
 
 

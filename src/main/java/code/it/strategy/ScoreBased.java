@@ -7,11 +7,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class ScroeBase implements Strategy {
+public class ScoreBased implements Strategy {
 
     private boolean debug = true;
     private int maxSteps = 10000;
-    private int depth = 5;
+    private int depth = 10;
     private int selection = 40;
     private int maxWidth = 10_000;
     private int triggerWidth = 300_000;
@@ -82,6 +82,10 @@ public class ScroeBase implements Strategy {
                     (int) (size * 0.5),
                     (int) (size * 0.75)
             };
+
+            System.out.println(String.format("Iteration %d, states=%d, history=%d", step, currentStates.size(), history.size()));
+
+
             debugOutput.append(String.format("Iteration %d, states=%d, history=%d<br/>", step, currentStates.size(), history.size()));
             debugOutput.append("<div style='display: flex'>");
             for (GameState nextState : currentStates) {
@@ -94,9 +98,6 @@ public class ScroeBase implements Strategy {
             }
             debugOutput.append("</div>");
             logDebug(debugOutput);
-
-
-            step++;
 
         } while (!gameCompleted && !gameFailed && step++ < maxSteps);
 
@@ -138,11 +139,12 @@ public class ScroeBase implements Strategy {
         for (Spot newSpot : spots) {
 
             GameState newState = state.copy().move(setting, box, newSpot);
+            newState.setPreviousState(state);
             GameUtils.updateMovable(setting, newState);
 
-            if (!GameUtils.isDead(setting, state)
-                    && !GameUtils.inHistory(history, state)){
-                GameUtils.addHistory(history, state);
+            if (!GameUtils.isDeadSpot(setting, newState)
+                    && !GameUtils.inHistory(history, newState)){
+                GameUtils.addHistory(history, newState);
                 nextStates.add(newState);
 
                 nextMoves(history, setting, newState, newSpot, depth-1, nextStates);

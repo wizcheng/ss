@@ -1,30 +1,33 @@
 package code.it;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.LoadingCache;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class GameHistory {
 
-    private Set<GameState> history;
+    private Cache<GameState, Boolean> history;
 
     public GameHistory() {
-        history = new HashSet<>(1000000);
+        history = CacheBuilder.newBuilder()
+                .softValues()
+                .maximumSize(5_000_000)
+                .build();
     }
 
     public void add(GameState state){
-        history.add(state);
-    }
-
-    public void addAll(List<GameState> states) {
-        history.addAll(states);
+        history.put(state, true);
     }
 
     public boolean exist(GameState state){
-        return history.contains(state);
+        return history.getIfPresent(state) != null;
     }
 
     public int size() {
-        return history.size();
+        return (int) history.size();
     }
 }
