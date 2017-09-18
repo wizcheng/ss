@@ -235,6 +235,18 @@ public class GameUtils {
                         }
                     }
 
+
+                    // level 20 hard code blocking
+                    if (setting.notSpace(box.top())
+                            && setting.notSpace(box.bottom())
+                            && setting.notSpace(box.left().left().left())){
+                        if (state.isBox(setting, box.left())){
+                            return true;
+                        }
+                    }
+
+
+
                 }
             }
             return false;

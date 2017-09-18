@@ -1,0 +1,19 @@
+//level 23
+{
+  "map": [
+    "xxxxxxxx--------x",
+    "xxxxxxxx-      -x",
+    "xxxxxxxx-  o o -x",
+    "x-------- o o  -x",
+    "--***  ---- -- -x",
+    "-****       -- -x",
+    "--***  -- oo-- --",
+    "x-------- o    b-",
+    "xxxxxx--- ---- --",
+    "xxxxxx- o o    -x",
+    "xxxxxx-  o -----x",
+    "xxxxxx--   -xxxxx",
+    "xxxxxxx-----xxxxx"
+  ],
+  "max_step": 900
+}

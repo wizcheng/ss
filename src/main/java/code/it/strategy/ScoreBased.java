@@ -11,10 +11,10 @@ public class ScoreBased implements Strategy {
 
     private boolean debug = true;
     private int maxSteps = 10000;
-    private int depth = 10;
+    private int depth = 12;
     private int selection = 40;
     private int maxWidth = 10_000;
-    private int triggerWidth = 300_000;
+    private int triggerWidth = 100_000;
 
     @Override
     public List<GameState> solve(GameSetting setting, GameHistory history, GameState initialState) {

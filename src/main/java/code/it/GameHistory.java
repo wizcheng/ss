@@ -15,7 +15,7 @@ public class GameHistory {
     public GameHistory() {
         history = CacheBuilder.newBuilder()
                 .softValues()
-                .maximumSize(5_000_000)
+                .maximumSize(250_000)
                 .build();
     }
 

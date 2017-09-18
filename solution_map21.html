@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Solution</title>
+</head>
+<body onLoad="javascript:startSteps()">
+
+Solution<br/>
+<div id="output_text"></div>
+<div id="output"></div>
+<hr/>
+
+
+
+<script>
+
+    let numberOfSteps = 0;
+    let current = 0;
+    function step(){
+        current++;
+        var index = current % numberOfSteps;
+        var id = "step_"+index+"_"+ numberOfSteps;
+        document.getElementById("output_text").innerHTML = id;
+        document.getElementById("output").innerHTML = document.getElementById(id).innerHTML;
+    }
+
+    function startSteps(){
+        setInterval(step, 150)
+    }
+
+
+
+
+</script>
+
+</body>
+</html>

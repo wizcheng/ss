@@ -1,0 +1,19 @@
+//level 28
+{
+  "map": [
+    "xxxxxxxxxxxxxx--------",
+    "xxxxxxxxxxxxxx-  ****-",
+    "xxx------------  ****-",
+    "xxx-    -  o o   ****-",
+    "xxx- ooo-o  o -  ****-",
+    "xxx-  o     o -  ****-",
+    "xxx- oo -o o o--------",
+    "----  o -     -xxxxxxx",
+    "-   - ---------xxxxxxx",
+    "-    o  --xxxxxxxxxxxx",
+    "- oo-oo b-xxxxxxxxxxxx",
+    "-   -   --xxxxxxxxxxxx",
+    "---------xxxxxxxxxxxxx"
+  ],
+  "max_step": 1300
+}

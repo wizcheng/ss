@@ -1,0 +1,53 @@
+Map map13 failed with exception: bitIndex < 0: -7
+2017-09-18T00:45:30.247
+Map map13 failed with exception: bitIndex < 0: -7
+Map map29 failed in 93175 ms
+Map map3 solved in 1110 ms, 105 steps
+2017-09-18T00:51:01.251
+Map map13 failed with exception: bitIndex < 0: -7
+Map map4 solved in 660 ms, 75 steps
+Map map5 solved in 109 ms, 39 steps
+Map map6 solved in 300 ms, 119 steps
+Map map7 solved in 142 ms, 54 steps
+Map map8 solved in 2661 ms, 135 steps
+Map map9 solved in 211 ms, 106 steps
+
+
+2017-09-18T00:52:54.312
+Map map13 solved in 622 ms, 66 steps
+
+
+2017-09-18T00:54:06.073
+Map map1 solved in 243 ms, 13 steps
+Map map10 solved in 439 ms, 65 steps
+Map map11 solved in 2698 ms, 237 steps
+Map map12 solved in 31 ms, 37 steps
+Map map13 solved in 78 ms, 66 steps
+Map map14 solved in 63 ms, 79 steps
+Map map15 solved in 1845 ms, 140 steps
+Map map16 failed in 2 ms
+Map map17 solved in 4871 ms, 113 steps
+Map map18 solved in 497 ms, 66 steps
+Map map19 solved in 650 ms, 110 steps
+Map map2 solved in 45 ms, 94 steps
+Map map20 solved in 64963 ms, 332 steps
+Map map21 failed OOM
+Map map22 solved in 8876 ms, 168 steps
+Map map23 solved in 16095 ms, 309 steps
+Map map24 solved in 133579 ms, 659 steps
+Map map25 solved in 72098 ms, 601 steps
+Map map26 solved in 85472 ms, 507 steps
+Map map27 failed OOM
+Map map28 failed OOM
+Map map29 failed in 84371 ms
+Map map3 solved in 731 ms, 105 steps
+Map map30 failed OOM
+Map map4 solved in 41 ms, 75 steps
+Map map5 solved in 31 ms, 39 steps
+Map map6 solved in 103 ms, 119 steps
+Map map7 solved in 36 ms, 54 steps
+Map map8 solved in 1194 ms, 135 steps
+Map map9 solved in 173 ms, 106 steps
+
+
+2017-09-18T01:12:21.224

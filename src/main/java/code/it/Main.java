@@ -3,11 +3,14 @@ package code.it;
 import code.it.strategy.BFS;
 import code.it.strategy.ScoreBased;
 import code.it.strategy.Strategy;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Main {
 
@@ -60,15 +63,15 @@ public class Main {
 
 
         // level 16
-//        lines.add("--------x");
-//        lines.add("-      -x");
-//        lines.add("- -oo  -x");
-//        lines.add("- ***- -x");
-//        lines.add("--***o --");
-//        lines.add("x- -- o -");
-//        lines.add("x-o  o  -");
-//        lines.add("x-  -  b-");
-//        lines.add("x--------");
+        lines.add("--------x");
+        lines.add("-      -x");
+        lines.add("- -oo  -x");
+        lines.add("- ***- -x");
+        lines.add("--***o --");
+        lines.add("x- -- o -");
+        lines.add("x-o  o  -");
+        lines.add("x-  -  b-");
+        lines.add("x--------");
 
 
 
@@ -128,16 +131,16 @@ public class Main {
 //        lines.add("xxxxxxx-----");
 
         // level 25
-        lines.add("------------xx");
-        lines.add("-**  -     ---");
-        lines.add("-**  - o  o  -");
-        lines.add("-**  -o----  -");
-        lines.add("-**    b --  -");
-        lines.add("-**  - -  o --");
-        lines.add("------ --o o -");
-        lines.add("xx- o  o o o -");
-        lines.add("xx-    -     -");
-        lines.add("xx------------");
+//        lines.add("------------xx");
+//        lines.add("-**  -     ---");
+//        lines.add("-**  - o  o  -");
+//        lines.add("-**  -o----  -");
+//        lines.add("-**    b --  -");
+//        lines.add("-**  - -  o --");
+//        lines.add("------ --o o -");
+//        lines.add("xx- o  o o o -");
+//        lines.add("xx-    -     -");
+//        lines.add("xx------------");
 
         // 27
 //        lines.add("xx----xxxxxxxxxx");
@@ -191,8 +194,101 @@ public class Main {
 //        lines.add("xxx-   -     -");
 //        lines.add("xxx-----------");
 
+        FileUtils.write(new File("all_solution.txt"), "\n\n"+LocalDateTime.now().toString()+"\n", "UTF-8", true);
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        for (File file : new File("./maps").listFiles()) {
+
+            String mapId = file.getName().replace(".json", "");
+
+            if (!mapId.equals("map27")){
+                continue;
+            }
+
+//            if (mapId.equals("map27") ||
+//                    mapId.equals("map21") ||
+//                    mapId.equals("map28") ||
+//                    mapId.equals("map30")) {
+//
+//                FileUtils.write(new File("all_solution.txt"), String.format("Map %s failed OOM\n", mapId), "UTF-8", true);
+//                continue;
+//            }
+
+            try {
+                String mapFileContent = FileUtils.readLines(file, "UTF-8")
+                        .stream()
+                        .filter(s -> !s.startsWith("//"))
+                        .collect(Collectors.joining("\n"));
 
 
+                Map mapFile = objectMapper.readValue(mapFileContent, Map.class);
+                List<String> mapLines = (List<String>) mapFile.get("map");
+
+
+                System.out.println(mapId);
+                System.out.println("-----------------------");
+                for (String mapLine : mapLines) {
+                    System.out.println(mapLine);
+                }
+
+
+                Solution solution = solve(mapLines, mapId);
+                if (solution.solved()){
+                    System.out.println(String.format("Map %s solved in %d ms, %d steps", mapId, solution.timeTakenMs, solution.states.size()));
+                    FileUtils.write(new File("all_solution.txt"), String.format("Map %s solved in %d ms, %d steps\n", mapId, solution.timeTakenMs, solution.states.size()), "UTF-8", true);
+                } else {
+                    System.out.println(String.format("Map %s failed in %d ms", mapId, solution.timeTakenMs));
+                    FileUtils.write(new File("all_solution.txt"), String.format("Map %s failed in %d ms\n", mapId, solution.timeTakenMs), "UTF-8", true);
+                }
+
+            } catch (Exception e) {
+                FileUtils.write(new File("all_solution.txt"), String.format("Map %s failed with exception: %s\n", mapId, e.getMessage()), "UTF-8", true);
+            }
+
+        }
+
+
+        System.exit(0);
+
+
+
+    }
+
+
+    public static class Solution {
+        List<GameState> states;
+        long timeTakenMs;
+
+        public Solution(List<GameState> states, long timeTakenMs) {
+            this.states = states;
+            this.timeTakenMs = timeTakenMs;
+        }
+
+        public boolean solved(){
+            return states!=null && !states.isEmpty();
+        }
+
+        public List<GameState> getStates() {
+            return states;
+        }
+
+        public void setStates(List<GameState> states) {
+            this.states = states;
+        }
+
+        public long getTimeTakenMs() {
+            return timeTakenMs;
+        }
+
+        public void setTimeTakenMs(long timeTakenMs) {
+            this.timeTakenMs = timeTakenMs;
+        }
+    }
+
+
+    private static Solution solve(List<String> lines, String mapId) throws IOException {
+
+        long startMs = System.currentTimeMillis();
 
         GameHistory history = GameUtils.createHistory();
         GameUtils.Game game = GameUtils.init(lines);
@@ -245,14 +341,13 @@ public class Main {
         template = template.replace("{{solution}}", output.toString());
         template = template.replace("{{steps}}", numberOfMoves + "");
 
-        FileUtils.writeStringToFile(new File("./solution.html"), template, "UTF-8");
+        FileUtils.writeStringToFile(new File("./solution_"+mapId+".html"), template, "UTF-8");
 
         List<String> moves = GameUtils.translateToMove(steps);
-        FileUtils.writeLines(new File("./solution.txt"), moves);
+        FileUtils.writeLines(new File("./solution_"+mapId+".txt"), moves);
 
-        System.exit(0);
-
-
+        long timeTakenMs = System.currentTimeMillis() - startMs;
+        return new Solution(steps, timeTakenMs);
 
     }
 }
